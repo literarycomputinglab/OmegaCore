@@ -23,10 +23,6 @@ public class Tester {
     private static ClassLoader loader = ClassLoader.getSystemClassLoader();
 
     public static void main(String[] args) {
-        String test = "una stringa di prova";
-        String res = test;
-        System.err.println(res);
-
         boolean kill = Boolean.parseBoolean(System.getProperty("kill"));
         int port = DEFAULT_PORT;
         if (System.getProperty("port") != null) {
@@ -182,9 +178,12 @@ public class Tester {
 
     @Part
     private static DocumentManager documentManager;
-    
+
     private static void test() throws MimeTypeParseException {
-        
-        documentManager.createSource(URI.create("test.lc.ilc.cnr.it"), new MimeType("text/plain"));
+        URI sourceURI = URI.create("http://claviusontheweb.it:8080/exist/rest//db/clavius/documents/147");
+        URI contentURI = URI.create("http://claviusontheweb.it:8080/exist/rest//db/clavius/documents/147/147.txt");
+        documentManager.createSource(sourceURI, new MimeType("text/plain"));
+        documentManager.setContent(sourceURI,contentURI);
+        documentManager.inFolder("archivio", sourceURI);
     }
 }

@@ -13,5 +13,6 @@ public interface DocumentManagerSPI {
     public MimeType getMimeType();
     
     public void create(DocumentManager.CreateAction createAction, URI uri);
+    public void update(DocumentManager.UpdateAction updateAction, URI sourceUri, URI targetUri);
     
 }
