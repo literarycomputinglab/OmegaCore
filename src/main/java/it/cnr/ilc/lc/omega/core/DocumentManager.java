@@ -50,7 +50,7 @@ public final class DocumentManager {
         }
     }
     
-    void inFolder(String name, URI sourceURI) {
+    public void inFolder(String name, URI sourceURI) {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         for (DocumentManagerSPI manager : managers) {
             manager.create(CreateAction.FOLDER, URI.create(name));

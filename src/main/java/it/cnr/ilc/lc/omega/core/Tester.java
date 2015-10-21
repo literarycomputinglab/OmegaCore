@@ -127,7 +127,7 @@ public class Tester {
 //            });
 //            testThread.start();
 //            
-            test();
+           // test();
             waitForLethalConnection(port);
 
             System.exit(0);
@@ -176,14 +176,14 @@ public class Tester {
         return urls;
     }
 
-    @Part
-    private static DocumentManager documentManager;
-
-    private static void test() throws MimeTypeParseException {
-        URI sourceURI = URI.create("http://claviusontheweb.it:8080/exist/rest//db/clavius/documents/147");
-        URI contentURI = URI.create("http://claviusontheweb.it:8080/exist/rest//db/clavius/documents/147/147.txt");
-        documentManager.createSource(sourceURI, new MimeType("text/plain"));
-        documentManager.setContent(sourceURI,contentURI);
-        documentManager.inFolder("archivio", sourceURI);
-    }
+//    @Part
+//    private static DocumentManager documentManager;
+//
+//    private static void test() throws MimeTypeParseException {
+//        URI sourceURI = URI.create("http://claviusontheweb.it:8080/exist/rest//db/clavius/documents/147");
+//        URI contentURI = URI.create("http://claviusontheweb.it:8080/exist/rest//db/clavius/documents/147/147.txt");
+//        documentManager.createSource(sourceURI, new MimeType("text/plain"));
+//        documentManager.setContent(sourceURI,contentURI);
+//        documentManager.inFolder("archivio", sourceURI);
+//    }
 }
