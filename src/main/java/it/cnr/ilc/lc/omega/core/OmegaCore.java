@@ -17,12 +17,12 @@ import sirius.kernel.di.std.Part;
  *
  * @author oakgen
  */
-public class Tester {
+public class OmegaCore {
 
     private static final int DEFAULT_PORT = 7777;
     private static ClassLoader loader = ClassLoader.getSystemClassLoader();
 
-    public static void main(String[] args) {
+    public static void init(String[] args) {
         boolean kill = Boolean.parseBoolean(System.getProperty("kill"));
         int port = DEFAULT_PORT;
         if (System.getProperty("port") != null) {
