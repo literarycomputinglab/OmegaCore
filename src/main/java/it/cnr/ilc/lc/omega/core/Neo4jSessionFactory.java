@@ -17,8 +17,8 @@ public class Neo4jSessionFactory {
     }
 
     public static Session getNeo4jSession() {
-        //return SESSION_FACTORY.openSession("http://wafi.iit.cnr.it:8074"); //http://wafi.iit.cnr.it:8074 http://localhost:7474
-        return SESSION_FACTORY.openSession("http://localhost:7474"); //http://wafi.iit.cnr.it:8074 http://localhost:7474
+        return SESSION_FACTORY.openSession("http://wafi.iit.cnr.it:8074");
+//        return SESSION_FACTORY.openSession("http://localhost:7474"); 
     }
 
 }

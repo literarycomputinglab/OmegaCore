@@ -79,7 +79,6 @@ public class DocumentManagerText implements DocumentManagerSPI {
         Source<TextContent> source = Source.sourceOf(TextContent.class);
         source.setUri(uri.toASCIIString());
         session.save(source);
-
         System.err.println("source uri: " + uri.toASCIIString());
     }
 
@@ -118,9 +117,11 @@ public class DocumentManagerText implements DocumentManagerSPI {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         Session session = Neo4jSessionFactory.getNeo4jSession();
         session.beginTransaction();
-        Folder folder = new Folder();
-        folder.setName(uri.toASCIIString());
-        session.save(folder);
+        if (!session.loadAll(Folder.class, new Filter("name", uri.toASCIIString())).iterator().hasNext()) {
+            Folder folder = new Folder();
+            folder.setName(uri.toASCIIString());
+            session.save(folder);
+        }
         session.getTransaction().commit();
     }
 
@@ -129,6 +130,7 @@ public class DocumentManagerText implements DocumentManagerSPI {
         Session session = Neo4jSessionFactory.getNeo4jSession();
         session.beginTransaction();
         Folder folder = session.loadAll(Folder.class, new Filter("name", sourceUri.toASCIIString())).iterator().next();
+        /*TODO controllare se URI target e' un Source oppure un folder. Se è un folder va chiamato il metodo folder.addFolder*/
         Source<TextContent> source = session.loadAll(Source.class, new Filter("uri", targetUri.toASCIIString())).iterator().next();
         folder.addFile(source);
         session.save(folder);
