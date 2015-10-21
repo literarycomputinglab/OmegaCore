@@ -9,6 +9,8 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
 import sirius.kernel.di.std.Part;
@@ -42,7 +44,7 @@ public class OmegaCore {
             if (kill) {
                 kill(port);
             } else {
-                kickstart(port);
+//                kickstart(port);
             }
         }
     }
@@ -66,7 +68,8 @@ public class OmegaCore {
     /*
      * Sets up a classloader and loads <tt>Sirius</tt> to initialize the framework.
      */
-    private static void kickstart(int port) {
+//    private static void kickstart(int port) {
+    public static void start() {
         boolean debug = true;
         //boolean debug = Boolean.parseBoolean(System.getProperty("debug"));
         boolean ide = Boolean.parseBoolean(System.getProperty("ide"));
@@ -127,13 +130,20 @@ public class OmegaCore {
 //            });
 //            testThread.start();
 //            
-           // test();
-            waitForLethalConnection(port);
-
-            System.exit(0);
+            // test();
+//            waitForLethalConnection(port);
+//            System.exit(0);
         } catch (Throwable e) {
             e.printStackTrace();
             System.exit(-1);
+        }
+    }
+
+    public static void stop() {
+        try {
+            Class.forName("sirius.kernel.Sirius", true, loader).getMethod("stop").invoke(null);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 

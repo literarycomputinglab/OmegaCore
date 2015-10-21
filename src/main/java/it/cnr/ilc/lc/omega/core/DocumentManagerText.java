@@ -41,7 +41,7 @@ public class DocumentManagerText implements DocumentManagerSPI {
     }
 
     @Override
-    public void create(DocumentManager.CreateAction createAction, URI uri) {
+    public void create(ResourceManager.CreateAction createAction, URI uri) {
         switch (createAction) {
             case SOURCE:
                 createSource(uri);
@@ -58,9 +58,9 @@ public class DocumentManagerText implements DocumentManagerSPI {
     }
 
     @Override
-    public void update(DocumentManager.UpdateAction updateAction, URI sourceUri, URI targetUri) {
+    public void update(ResourceManager.UpdateAction updateAction, URI sourceUri, URI targetUri) {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        //create(DocumentManager.CreateAction.CONTENT, targetUri); // controllare se esiste già il content
+        //create(ResourceManager.CreateAction.CONTENT, targetUri); // controllare se esiste già il content
         switch (updateAction) {
             case CONTENT:
                 updateContent(sourceUri, targetUri);
@@ -76,18 +76,16 @@ public class DocumentManagerText implements DocumentManagerSPI {
     private void createSource(URI uri) {
         // controllare che la risorsa non sia già presente con lo stesso URI
         Session session = Neo4jSessionFactory.getNeo4jSession();
-        session.beginTransaction();
         Source<TextContent> source = Source.sourceOf(TextContent.class);
         source.setUri(uri.toASCIIString());
         session.save(source);
-        session.getTransaction().commit();
 
         System.err.println("source uri: " + uri.toASCIIString());
     }
 
     private void createContent(URI uri) {
         Session session = Neo4jSessionFactory.getNeo4jSession();
-        TextContent content = Content.contentOf(TextContent.class);; // non mi piace il tipo così specifico
+        TextContent content = Content.contentOf(TextContent.class); // non mi piace il tipo così specifico
 
         try {
             //controllare che la risorsa non sia già presente con lo stesso URI

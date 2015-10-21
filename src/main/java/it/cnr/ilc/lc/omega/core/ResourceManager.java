@@ -11,33 +11,38 @@ import sirius.kernel.di.std.Register;
  *
  * @author oakgen
  */
-@Register(classes = DocumentManager.class)
-public final class DocumentManager {
+@Register(classes = ResourceManager.class)
+public final class ResourceManager {
 
-    
     public enum CreateAction {
 
         SOURCE, CONTENT, FOLDER
     }
+
     public enum UpdateAction {
 
         SOURCE, CONTENT, FOLDER
     }
-    
 
     @Parts(value = DocumentManagerSPI.class)
     private Collection<DocumentManagerSPI> managers;
 
-    public void createSource(URI uri, MimeType mimeType) {
-        System.err.println("createSource: (" + uri + ", " + mimeType.getBaseType() + ")");
-        for (DocumentManagerSPI manager : managers) {
+    public void createSource(final URI uri, final MimeType mimeType) {
+        new ManagerAction() {
 
-            if (manager.getMimeType().getBaseType().equals(mimeType.getBaseType())) {
+            @Override
+            protected void action() {
+                System.err.println("createSource: (" + uri + ", " + mimeType.getBaseType() + ")");
+                for (DocumentManagerSPI manager : managers) {
 
-                manager.create(CreateAction.SOURCE, uri);
-                return;
+                    if (manager.getMimeType().getBaseType().equals(mimeType.getBaseType())) {
+
+                        manager.create(CreateAction.SOURCE, uri);
+                        return;
+                    }
+                }
             }
-        }
+        }.action();
     }
 
     public void setContent(URI sourceUri, URI contentURI) {
@@ -49,7 +54,7 @@ public final class DocumentManager {
 
         }
     }
-    
+
     public void inFolder(String name, URI sourceURI) {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         for (DocumentManagerSPI manager : managers) {

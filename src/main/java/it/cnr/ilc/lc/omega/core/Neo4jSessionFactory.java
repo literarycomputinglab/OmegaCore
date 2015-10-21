@@ -9,8 +9,6 @@ import org.neo4j.ogm.session.SessionFactory;
  */
 public class Neo4jSessionFactory {
 
-    
-    
     private static final SessionFactory SESSION_FACTORY = new SessionFactory("it.cnr.ilc.lc.omega");
 
     static {

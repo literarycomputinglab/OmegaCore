@@ -1,6 +1,6 @@
 package it.cnr.ilc.lc.omega.core.spi;
 
-import it.cnr.ilc.lc.omega.core.DocumentManager;
+import it.cnr.ilc.lc.omega.core.ResourceManager;
 import java.net.URI;
 import javax.activation.MimeType;
 
@@ -12,7 +12,7 @@ public interface DocumentManagerSPI {
 
     public MimeType getMimeType();
     
-    public void create(DocumentManager.CreateAction createAction, URI uri);
-    public void update(DocumentManager.UpdateAction updateAction, URI sourceUri, URI targetUri);
+    public void create(ResourceManager.CreateAction createAction, URI uri);
+    public void update(ResourceManager.UpdateAction updateAction, URI sourceUri, URI targetUri);
     
 }
