@@ -11,16 +11,24 @@ public abstract class ManagerAction {
     public void doAction() throws ActionException {
         Session session = Neo4jSessionFactory.getNeo4jSession();
         try {
-            session.beginTransaction();
+            //session.beginTransaction();
+            System.err.println(session.toString());
             action();
-            session.getTransaction().commit();
+            System.err.println("NELLA DO ACTION DOPO LA ACTION");
+            System.err.println("PRENDE LA TRANSAZIONE:");
+            //System.err.println(session.getTransaction().toString());
+
+            //session.getTransaction().commit(); //FIXME la trasazione risulta nulla: capire bene!!
+
+            System.err.println("NELLA DO ACTION DOPO IL COMMIT");
         } catch (Exception e) {
+            System.err.println("NELLA catch DEL COMMIT");
             try {
-                session.getTransaction().rollback();
+                //session.getTransaction().rollback();
             } catch (Exception r) {
             }
             throw new ActionException(e);
-        } 
+        }
     }
 
     protected abstract void action();

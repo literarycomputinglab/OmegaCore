@@ -4,16 +4,10 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.activation.MimeType;
-import javax.activation.MimeTypeParseException;
-import sirius.kernel.di.std.Part;
 
 /**
  *

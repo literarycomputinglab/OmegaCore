@@ -26,7 +26,7 @@ import sirius.kernel.di.std.Register;
  *
  * @author oakgen
  */
-@Register(classes = DocumentManagerSPI.class)
+@Register(classes = DocumentManagerSPI.class, name = "text/plain")
 public class DocumentManagerText implements DocumentManagerSPI {
 
     private final MimeType mimeType;
@@ -54,6 +54,29 @@ public class DocumentManagerText implements DocumentManagerSPI {
                 break;
             default:
                 throw new UnsupportedOperationException(createAction.name() + " unsupported");
+        }
+    }
+
+    @Override
+    public void create(Source<? extends Content> source) {
+        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        Session session = Neo4jSessionFactory.getNeo4jSession();
+        try{
+        System.err.println("NELL CREATE PRIMA DELLA SESSION");
+     
+        session.beginTransaction(); //FIXME da spostare nel metodo chiamante, ma al momento non funziona le commit all'uscita
+        System.err.println("NELL CREATE DOPO LA SESSION");
+        session.save(source);
+        System.err.println("NELL CREATE DOPO LA SALVA");
+        session.getTransaction().commit();
+        System.err.println("NELL CREATE DOPO LA COMMIT");
+        } catch(Exception e){
+            System.err.println("NEL CATCH DELLA CREATE PER LA COMMIT");
+            try {
+                session.getTransaction().rollback();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
     }
 
