@@ -5,10 +5,7 @@ import it.cnr.ilc.lc.omega.entity.Content;
 import it.cnr.ilc.lc.omega.entity.Source;
 import java.net.URI;
 import java.util.Collection;
-import javafx.scene.text.Text;
 import javax.activation.MimeType;
-import org.neo4j.ogm.session.Session;
-import sirius.kernel.di.std.Part;
 import sirius.kernel.di.std.Parts;
 import sirius.kernel.di.std.Register;
 
@@ -77,11 +74,11 @@ public final class ResourceManager {
         }.doAction();
     }
 
-    public void setContent(URI sourceUri, URI contentURI) {
-        System.err.println("setContent: (" + sourceUri + ", " + contentURI + ")");
+    public void setContent(URI sourceUri, URI contentUri) {
+        System.err.println("setContent: (" + sourceUri + ", " + contentUri + ")");
         for (DocumentManagerSPI manager : managers) {
-            manager.create(CreateAction.CONTENT, contentURI);
-            manager.update(UpdateAction.CONTENT, sourceUri, contentURI);
+            manager.create(CreateAction.CONTENT, contentUri);
+            manager.update(UpdateAction.CONTENT, sourceUri, contentUri);
             return;
 
         }
