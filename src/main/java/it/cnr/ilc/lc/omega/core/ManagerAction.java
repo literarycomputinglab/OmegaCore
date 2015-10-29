@@ -1,5 +1,6 @@
 package it.cnr.ilc.lc.omega.core;
 
+import it.cnr.ilc.lc.omega.core.persistence.Neo4jSessionFactory;
 import org.neo4j.ogm.session.Session;
 
 /**
@@ -8,13 +9,14 @@ import org.neo4j.ogm.session.Session;
  */
 public abstract class ManagerAction {
 
-    public void doAction() throws ActionException {
+    public <T> T doAction() throws ActionException {
         Session session = Neo4jSessionFactory.getNeo4jSession();
+        T ret = null;
 
         try {
             session.beginTransaction();
             System.err.println(session.toString());
-            action();
+            ret = action();
             System.err.println("NELLA DO ACTION DOPO LA ACTION");
             System.err.println("PRENDE LA TRANSAZIONE:");
             //System.err.println(session.getTransaction().toString());
@@ -28,9 +30,10 @@ public abstract class ManagerAction {
             e.printStackTrace();
             throw new ActionException(e);
         }
+        return ret;
     }
 
-    protected abstract void action();
+    protected abstract <T> T action();
 
     public static class ActionException extends Exception {
 

@@ -1,7 +1,10 @@
 package it.cnr.ilc.lc.omega.core;
 
+import it.cnr.ilc.lc.omega.core.persistence.Neo4jSessionFactory;
 import it.cnr.ilc.lc.omega.clavius.catalog.entity.Folder;
-import it.cnr.ilc.lc.omega.core.spi.DocumentManagerSPI;
+import it.cnr.ilc.lc.omega.core.spi.ResourceManagerSPI;
+import it.cnr.ilc.lc.omega.entity.Annotation;
+import it.cnr.ilc.lc.omega.entity.AnnotationBuilder;
 import it.cnr.ilc.lc.omega.entity.Content;
 import it.cnr.ilc.lc.omega.entity.Source;
 import it.cnr.ilc.lc.omega.entity.TextContent;
@@ -24,12 +27,12 @@ import sirius.kernel.di.std.Register;
  *
  * @author oakgen
  */
-@Register(classes = DocumentManagerSPI.class, name = "text/plain")
-public class DocumentManagerText implements DocumentManagerSPI {
+@Register(classes = ResourceManagerSPI.class, name = "claviustext")
+public class ResourceManagerText implements ResourceManagerSPI {
 
     private final MimeType mimeType;
 
-    public DocumentManagerText() throws MimeTypeParseException {
+    public ResourceManagerText() throws MimeTypeParseException {
         this.mimeType = new MimeType("text/plain");
     }
 
@@ -37,6 +40,11 @@ public class DocumentManagerText implements DocumentManagerSPI {
     public MimeType getMimeType() {
         return mimeType;
     }
+    
+    @Override
+     public void register(String type, Class<? extends Annotation.Extension> clazz){
+      Annotation.register(type, clazz);
+     }
 
     @Override
     public void create(ResourceManager.CreateAction createAction, URI uri) {
@@ -114,9 +122,9 @@ public class DocumentManagerText implements DocumentManagerSPI {
             content.setUri(uri.toASCIIString());
             content.setText(new Scanner(new BufferedInputStream(site.getInputStream()), "UTF-8").useDelimiter(Pattern.compile("\\A")).next());
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(DocumentManagerText.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ResourceManagerText.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(DocumentManagerText.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ResourceManagerText.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             session.save(content);
             session.getTransaction().commit();
@@ -156,6 +164,14 @@ public class DocumentManagerText implements DocumentManagerSPI {
         folder.addFile(source);
         session.save(folder);
         session.getTransaction().commit();
+    }
+
+    @Override
+    public <T extends Content, E extends Annotation.Extension> Annotation<T,E> create(String type, AnnotationBuilder<E> builder) {
+        Session session = Neo4jSessionFactory.getNeo4jSession();
+        Annotation<T,E> annotation = Annotation.newAnnotation(type, builder);
+        session.save(annotation);
+        return annotation;
     }
 
 }
