@@ -14,8 +14,8 @@ import sirius.kernel.di.std.Register;
  *
  * @author oakgen
  */
-@Register(classes = SessionFactory.class)
-public class Neo4jSessionFactory implements OmegaSessionFactory {
+@Register(classes = PersistenceSessionFactory.class)
+public class Neo4jSessionFactory implements PersistenceSessionFactory {
 
     @ConfigValue("session.scope")
     private static  String scope;

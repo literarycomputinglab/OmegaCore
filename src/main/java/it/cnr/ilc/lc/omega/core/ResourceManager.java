@@ -1,10 +1,12 @@
 package it.cnr.ilc.lc.omega.core;
 
+import it.cnr.ilc.lc.omega.core.annotation.BaseAnnotationType;
 import it.cnr.ilc.lc.omega.core.spi.ResourceManagerSPI;
 import it.cnr.ilc.lc.omega.entity.Annotation;
 import it.cnr.ilc.lc.omega.entity.AnnotationBuilder;
 import it.cnr.ilc.lc.omega.entity.Content;
 import it.cnr.ilc.lc.omega.entity.Source;
+import it.cnr.ilc.lc.omega.entity.TextContent;
 import java.net.URI;
 import java.util.Collection;
 import javax.activation.MimeType;
@@ -17,6 +19,10 @@ import sirius.kernel.di.std.Register;
  */
 @Register(classes = ResourceManager.class)
 public final class ResourceManager {
+
+    public void updateAnnotationLocus(Annotation<TextContent, BaseAnnotationType> annotation, int start, int end) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 
     public enum CreateAction {
 
@@ -41,9 +47,7 @@ public final class ResourceManager {
             protected <T> T action() {
                 System.err.println("createSource: (" + uri + ", " + mimeType.getBaseType() + ")");
 
-//                textmanager.create(CreateAction.SOURCE, uri);
                 for (ResourceManagerSPI manager : managers) {
-
                     if (manager.getMimeType().getBaseType().equals(mimeType.getBaseType())) {
                         manager.create(CreateAction.SOURCE, uri);
                         return (T) new Boolean(true);
@@ -102,7 +106,24 @@ public final class ResourceManager {
         }
     }
 
-    public <T extends Content, E extends Annotation.Extension> Annotation<T, E>
+    public void saveAnnotation(final Annotation annotation) throws ManagerAction.ActionException {
+
+        new ManagerAction() {
+
+            @Override
+            protected Boolean action() {
+                for (ResourceManagerSPI manager : managers) {
+                    manager.save(annotation);
+                    return true;
+                }
+                return false;
+            }
+
+        }.doAction();
+
+    }
+
+    public <T extends Content, E extends Annotation.Type> Annotation<T, E>
             createAnnotation(final Class<E> clazz, final AnnotationBuilder<E> builder)
             throws ManagerAction.ActionException {
         // TODO gestire opporutnamente le eccezioni
@@ -111,15 +132,21 @@ public final class ResourceManager {
 
             @Override
             protected Annotation<T, E> action() {
+                System.err.println("createAnnotation() start");
+
                 for (ResourceManagerSPI manager : managers) {
                     manager.register(clazz.getSimpleName(), clazz);
-                    Annotation<T, E> annotation = manager.create(clazz.getSimpleName(), builder);
+                    Annotation<T, E> annotation
+                            = manager.create(clazz.getSimpleName(), builder);
+                    System.err.println("createAnnotation() end");
+
                     return annotation;
                 }
+                System.err.println("createAnnotation() end null");
+
                 return null;
             }
         ;
-
     }
 
 
@@ -127,6 +154,7 @@ public final class ResourceManager {
         
  // non dovrebbe mai arrivare qui
 
-    }
+            }
+          
 
 }

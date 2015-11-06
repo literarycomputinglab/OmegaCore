@@ -7,6 +7,7 @@ import it.cnr.ilc.lc.omega.entity.Annotation;
 import it.cnr.ilc.lc.omega.entity.AnnotationBuilder;
 import it.cnr.ilc.lc.omega.entity.Content;
 import it.cnr.ilc.lc.omega.entity.Source;
+import it.cnr.ilc.lc.omega.entity.SuperNode;
 import it.cnr.ilc.lc.omega.entity.TextContent;
 import java.io.BufferedInputStream;
 import java.io.FileNotFoundException;
@@ -40,11 +41,11 @@ public class ResourceManagerText implements ResourceManagerSPI {
     public MimeType getMimeType() {
         return mimeType;
     }
-    
+
     @Override
-     public void register(String type, Class<? extends Annotation.Extension> clazz){
-      Annotation.register(type, clazz);
-     }
+    public void register(String type, Class<? extends Annotation.Type> clazz) {
+        Annotation.register(type, clazz);
+    }
 
     @Override
     public void create(ResourceManager.CreateAction createAction, URI uri) {
@@ -67,16 +68,16 @@ public class ResourceManagerText implements ResourceManagerSPI {
     public void create(Source<? extends Content> source) {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         Session session = Neo4jSessionFactory.getNeo4jSession();
-        try{
-        System.err.println("NELL CREATE PRIMA DELLA SESSION");
-     
-        session.beginTransaction(); //FIXME da spostare nel metodo chiamante, ma al momento non funziona le commit all'uscita
-        System.err.println("NELL CREATE DOPO LA SESSION");
-        session.save(source);
-        System.err.println("NELL CREATE DOPO LA SALVA");
-        session.getTransaction().commit();
-        System.err.println("NELL CREATE DOPO LA COMMIT");
-        } catch(Exception e){
+        try {
+            System.err.println("NELL CREATE PRIMA DELLA SESSION");
+
+            session.beginTransaction(); //FIXME da spostare nel metodo chiamante, ma al momento non funziona le commit all'uscita
+            System.err.println("NELL CREATE DOPO LA SESSION");
+            session.save(source);
+            System.err.println("NELL CREATE DOPO LA SALVA");
+            session.getTransaction().commit();
+            System.err.println("NELL CREATE DOPO LA COMMIT");
+        } catch (Exception e) {
             System.err.println("NEL CATCH DELLA CREATE PER LA COMMIT");
             try {
                 session.getTransaction().rollback();
@@ -167,11 +168,18 @@ public class ResourceManagerText implements ResourceManagerSPI {
     }
 
     @Override
-    public <T extends Content, E extends Annotation.Extension> Annotation<T,E> create(String type, AnnotationBuilder<E> builder) {
-        Session session = Neo4jSessionFactory.getNeo4jSession();
-        Annotation<T,E> annotation = Annotation.newAnnotation(type, builder);
-        session.save(annotation);
+    public <T extends Content, E extends Annotation.Type> Annotation<T, E> create(String type, AnnotationBuilder<E> builder) {
+
+        Annotation<T, E> annotation = Annotation.newAnnotation(type, builder);
         return annotation;
+    }
+
+    @Override
+    public <T extends SuperNode> void save(T resource) {
+
+        Session session = Neo4jSessionFactory.getNeo4jSession();
+        session.save(resource);
+
     }
 
 }

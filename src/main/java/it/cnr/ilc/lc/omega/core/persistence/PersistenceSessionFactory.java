@@ -9,6 +9,6 @@ package it.cnr.ilc.lc.omega.core.persistence;
  *
  * @author simone
  */
-public interface OmegaSessionFactory {
+public interface PersistenceSessionFactory {
     <T> T getSession();
 }
