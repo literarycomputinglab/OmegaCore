@@ -6,9 +6,12 @@ import it.cnr.ilc.lc.omega.core.spi.ResourceManagerSPI;
 import it.cnr.ilc.lc.omega.entity.Annotation;
 import it.cnr.ilc.lc.omega.entity.AnnotationBuilder;
 import it.cnr.ilc.lc.omega.entity.Content;
+import it.cnr.ilc.lc.omega.entity.Locus;
 import it.cnr.ilc.lc.omega.entity.Source;
 import it.cnr.ilc.lc.omega.entity.SuperNode;
 import it.cnr.ilc.lc.omega.entity.TextContent;
+import it.cnr.ilc.lc.omega.entity.TextLocus;
+import it.cnr.ilc.lc.omega.exception.InvalidURIException;
 import java.io.BufferedInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -48,45 +51,45 @@ public class ResourceManagerText implements ResourceManagerSPI {
     }
 
     @Override
-    public void create(ResourceManager.CreateAction createAction, URI uri) {
+    public <T extends SuperNode> T create(ResourceManager.CreateAction createAction, URI uri) throws InvalidURIException{
         switch (createAction) {
             case SOURCE:
-                createSource(uri);
-                break;
+                return (T) createSource(uri);
             case CONTENT:
-                createContent(uri);
-                break;
+                return (T) createContent(uri);
             case FOLDER:
-                createFolder(uri);
-                break;
+                return (T) createFolder(uri);
+            case LOCUS:
+                return (T) createLocus(uri);
             default:
                 throw new UnsupportedOperationException(createAction.name() + " unsupported");
         }
     }
 
-    @Override
-    public void create(Source<? extends Content> source) {
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        Session session = Neo4jSessionFactory.getNeo4jSession();
-        try {
-            System.err.println("NELL CREATE PRIMA DELLA SESSION");
+    /*
+     @Override
+     public void create(Source<? extends Content> source) {
+        
+     Session session = Neo4jSessionFactory.getNeo4jSession();
+     try {
+     System.err.println("NELL CREATE PRIMA DELLA SESSION");
 
-            session.beginTransaction(); //FIXME da spostare nel metodo chiamante, ma al momento non funziona le commit all'uscita
-            System.err.println("NELL CREATE DOPO LA SESSION");
-            session.save(source);
-            System.err.println("NELL CREATE DOPO LA SALVA");
-            session.getTransaction().commit();
-            System.err.println("NELL CREATE DOPO LA COMMIT");
-        } catch (Exception e) {
-            System.err.println("NEL CATCH DELLA CREATE PER LA COMMIT");
-            try {
-                session.getTransaction().rollback();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-    }
-
+     session.beginTransaction(); //FIXME da spostare nel metodo chiamante, ma al momento non funziona le commit all'uscita
+     System.err.println("NELL CREATE DOPO LA SESSION");
+     session.save(source);
+     System.err.println("NELL CREATE DOPO LA SALVA");
+     session.getTransaction().commit();
+     System.err.println("NELL CREATE DOPO LA COMMIT");
+     } catch (Exception e) {
+     System.err.println("NEL CATCH DELLA CREATE PER LA COMMIT");
+     try {
+     session.getTransaction().rollback();
+     } catch (Exception ex) {
+     ex.printStackTrace();
+     }
+     }
+     }
+     */
     @Override
     public void update(ResourceManager.UpdateAction updateAction, URI sourceUri, URI targetUri) {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
@@ -103,22 +106,19 @@ public class ResourceManagerText implements ResourceManagerSPI {
         }
     }
 
-    private void createSource(URI uri) {
+    private Source<TextContent> createSource(URI uri) throws InvalidURIException {
         // controllare che la risorsa non sia già presente con lo stesso URI
-        Session session = Neo4jSessionFactory.getNeo4jSession();
         Source<TextContent> source = Source.sourceOf(TextContent.class);
         source.setUri(uri.toASCIIString());
-        session.save(source);
         System.err.println("source uri: " + uri.toASCIIString());
+        return source;
     }
 
-    private void createContent(URI uri) {
-        Session session = Neo4jSessionFactory.getNeo4jSession();
+    private TextContent createContent(URI uri) throws InvalidURIException {
         TextContent content = Content.contentOf(TextContent.class); // non mi piace il tipo così specifico
 
         try {
             //controllare che la risorsa non sia già presente con lo stesso URI
-            session.beginTransaction();
             URLConnection site = uri.toURL().openConnection();
             content.setUri(uri.toASCIIString());
             content.setText(new Scanner(new BufferedInputStream(site.getInputStream()), "UTF-8").useDelimiter(Pattern.compile("\\A")).next());
@@ -126,11 +126,9 @@ public class ResourceManagerText implements ResourceManagerSPI {
             Logger.getLogger(ResourceManagerText.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
             Logger.getLogger(ResourceManagerText.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            session.save(content);
-            session.getTransaction().commit();
         }
 
+        return content;
     }
 
     private void updateContent(URI sourceUri, URI targetUri) {
@@ -143,16 +141,24 @@ public class ResourceManagerText implements ResourceManagerSPI {
         session.getTransaction().commit();
     }
 
-    private void createFolder(URI uri) {
+    /*
+     private Folder createFolder(URI uri) {
+     //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+     Session session = Neo4jSessionFactory.getNeo4jSession();
+     session.beginTransaction();
+     if (!session.loadAll(Folder.class, new Filter("name", uri.toASCIIString())).iterator().hasNext()) {
+     Folder folder = new Folder();
+     folder.setName(uri.toASCIIString());
+     session.save(folder);
+     }
+     session.getTransaction().commit();
+     } */
+    
+    private Folder createFolder(URI uri) {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        Session session = Neo4jSessionFactory.getNeo4jSession();
-        session.beginTransaction();
-        if (!session.loadAll(Folder.class, new Filter("name", uri.toASCIIString())).iterator().hasNext()) {
-            Folder folder = new Folder();
-            folder.setName(uri.toASCIIString());
-            session.save(folder);
-        }
-        session.getTransaction().commit();
+        Folder folder = new Folder();
+        folder.setName(uri.toASCIIString());
+        return folder;
     }
 
     private void updateFolder(URI sourceUri, URI targetUri) {
@@ -168,9 +174,11 @@ public class ResourceManagerText implements ResourceManagerSPI {
     }
 
     @Override
-    public <T extends Content, E extends Annotation.Type> Annotation<T, E> create(String type, AnnotationBuilder<E> builder) {
+    public <T extends Content, E extends Annotation.Type> Annotation<T, E>
+            create(String type, AnnotationBuilder<E> builder) throws InvalidURIException {
 
         Annotation<T, E> annotation = Annotation.newAnnotation(type, builder);
+        
         return annotation;
     }
 
@@ -180,6 +188,48 @@ public class ResourceManagerText implements ResourceManagerSPI {
         Session session = Neo4jSessionFactory.getNeo4jSession();
         session.save(resource);
 
+    }
+
+    private TextLocus createLocus(URI uri) throws InvalidURIException {
+        
+        TextLocus locus = Locus.locusOf(TextLocus.class, Locus.PointsTo.CONTENT);
+        locus.setUri(uri.toASCIIString());
+        return locus;
+        
+    }
+
+    @Override
+    public <T extends SuperNode> T create(Source<? extends Content> source) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public <T extends SuperNode> T load(URI uri) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void update(ResourceManager.UpdateAction updateAction, URI resourceUri, ResourceStatus status) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public <T extends SuperNode> T update(ResourceManager.UpdateAction updateAction, T resource, ResourceStatus status) {
+        switch (updateAction){
+            case LOCUS:
+                return (T) updateTextLocus((TextLocus)resource, status); // controllare i cast per i tipi parmetrici
+             default:
+                 throw new UnsupportedOperationException(updateAction.name() + " unsupported");
+        }
+    }
+
+    private TextLocus updateTextLocus(TextLocus locus, ResourceStatus status) {
+        locus.setSource(status.getSource());
+        locus.setStart(status.getStart());
+        locus.setEnd(status.getEnd());
+        locus.setAnnotation(status.getAnnotation());
+        System.err.println("******** uri " + locus.getUri());
+        return locus;
     }
 
 }

@@ -1,14 +1,18 @@
 package it.cnr.ilc.lc.omega.core;
 
-import it.cnr.ilc.lc.omega.core.annotation.BaseAnnotationType;
 import it.cnr.ilc.lc.omega.core.spi.ResourceManagerSPI;
 import it.cnr.ilc.lc.omega.entity.Annotation;
 import it.cnr.ilc.lc.omega.entity.AnnotationBuilder;
 import it.cnr.ilc.lc.omega.entity.Content;
 import it.cnr.ilc.lc.omega.entity.Source;
+import it.cnr.ilc.lc.omega.entity.SuperNode;
 import it.cnr.ilc.lc.omega.entity.TextContent;
+import it.cnr.ilc.lc.omega.entity.TextLocus;
+import it.cnr.ilc.lc.omega.exception.InvalidURIException;
 import java.net.URI;
 import java.util.Collection;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.activation.MimeType;
 import sirius.kernel.di.std.Parts;
 import sirius.kernel.di.std.Register;
@@ -20,18 +24,37 @@ import sirius.kernel.di.std.Register;
 @Register(classes = ResourceManager.class)
 public final class ResourceManager {
 
-    public void updateAnnotationLocus(Annotation<TextContent, BaseAnnotationType> annotation, int start, int end) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
     public enum CreateAction {
 
-        SOURCE, CONTENT, FOLDER, ANNOTATION
+        SOURCE, CONTENT, FOLDER, ANNOTATION, LOCUS
     }
 
     public enum UpdateAction {
 
-        SOURCE, CONTENT, FOLDER, ANNOTATION
+        SOURCE, CONTENT, FOLDER, ANNOTATION, LOCUS
+    }
+
+    public enum OmegaMimeType {
+
+        PLAIN("text/plain"),
+        PNG("image/png");
+
+        private final String type;
+
+        private OmegaMimeType(String s) {
+            this.type = s;
+        }
+
+        private String getType() {
+            return type;
+
+        }
+
+        @Override
+        public String toString() {
+            return getType();
+        }
+
     }
 
     @Parts(value = ResourceManagerSPI.class)
@@ -39,39 +62,49 @@ public final class ResourceManager {
 
 //    @Part(configPath = "text/plain")
 //    private ResourceManagerSPI textmanager;
-    public void createSource(final URI uri, final MimeType mimeType) throws ManagerAction.ActionException {
+    public <T extends Content> Source<T> createSource(final URI uri, final MimeType mimeType) throws ManagerAction.ActionException {
 
-        new ManagerAction() {
+        return new ManagerAction() {
 
             @Override
-            protected <T> T action() {
+            protected Source<T> action() throws ActionException {
                 System.err.println("createSource: (" + uri + ", " + mimeType.getBaseType() + ")");
-
                 for (ResourceManagerSPI manager : managers) {
                     if (manager.getMimeType().getBaseType().equals(mimeType.getBaseType())) {
-                        manager.create(CreateAction.SOURCE, uri);
-                        return (T) new Boolean(true);
+                        try {
+                            Source<T> source = manager.create(CreateAction.SOURCE, uri);
+                            return source;
+                        } catch (InvalidURIException ex) {
+                            Logger.getLogger(ResourceManager.class.getName()).log(Level.SEVERE, null, ex);
+                            throw new ManagerAction.ActionException(ex);
+                        }
+                        
                     }
                 }
-                return (T) new Boolean(false);
+                return null;
             }
         }.doAction();
 
         //TODO: se il metodo non trova un manager appropriato non crea il source e quindi solleva un eccezione
     }
 
-    public void createSourceContent(final Source<? extends Content> source) throws ManagerAction.ActionException {
+    public void createSourceContent(final Source<? extends Content> source) throws ManagerAction.ActionException, InvalidURIException {
         // System.err.println("createSourceContent: (" + source.toString()+ ")");
         new ManagerAction() { // FIXME attenzione questa soluzione presenta un problema con la session.getTeransaction().commit() - capire!!
 
             @Override
-            protected Boolean action() {
+            protected Boolean action() throws ActionException {
                 System.err.println("CREATESOURCECONTENT: (" + source.toString() + ")");
                 for (ResourceManagerSPI manager : managers) {
                     System.err.println("NEL FOR: (" + manager.toString() + ")");
                     //if (manager.getMimeType().getBaseType().equals(source.getContent().getMimetype())) {
                     if (manager instanceof ResourceManagerText) {
-                        manager.create(source);
+                        try {
+                            manager.create(source);
+                        } catch (InvalidURIException ex) {
+                            Logger.getLogger(ResourceManager.class.getName()).log(Level.SEVERE, null, ex);
+                            throw new ActionException(ex);
+                        }
                         System.err.println("PRIMA DEL RETURN: (" + manager.toString() + ")");
 
                         return true;
@@ -86,7 +119,7 @@ public final class ResourceManager {
     .doAction();
    }
 
-    public void setContent(URI sourceUri, URI contentUri) {
+    public void setContent(URI sourceUri, URI contentUri) throws InvalidURIException {
         System.err.println("setContent: (" + sourceUri + ", " + contentUri + ")");
         for (ResourceManagerSPI manager : managers) {
             manager.create(CreateAction.CONTENT, contentUri);
@@ -96,7 +129,7 @@ public final class ResourceManager {
         }
     }
 
-    public void inFolder(String name, URI sourceURI) {
+    public void inFolder(String name, URI sourceURI) throws InvalidURIException {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         for (ResourceManagerSPI manager : managers) {
             manager.create(CreateAction.FOLDER, URI.create(name));
@@ -123,6 +156,58 @@ public final class ResourceManager {
 
     }
 
+    //FIXME: Da generalizzare?
+    /*public <T extends Content, E extends Annotation.Type> void
+     updateTextAnnotationLocus(Source<T> source, Annotation<T, E> annotation, WKT? ) {*/
+    public <E extends Annotation.Type> void
+            updateTextAnnotationLocus(final Source<TextContent> source,
+                    final Annotation<TextContent, E> annotation,
+                    final int start, final int end) throws ManagerAction.ActionException {
+
+        //PRENDERE UN MANAGER
+        //FARE CREATE DEL LOCUS CON QUEL MANAGER
+        //POPOLARE IL LOCUS
+        //AGGANCIARE LOCUS ALLA ANNOTAZIONE
+        new ManagerAction() {
+
+            @Override
+            protected <T> T action() throws ActionException {
+                TextLocus locus;
+                for (ResourceManagerSPI manager : managers) {
+                    if (manager.getMimeType().getBaseType().equals(OmegaMimeType.PLAIN.toString())) {
+                        try {
+                            locus = manager.create(CreateAction.LOCUS,
+                                    URI.create("/uri/annotation/locus/" + String.valueOf(System.currentTimeMillis())));
+                            // locus.setStart(start); //FIXME i metodi per aggiornare il locus devono essere fatti nel manager
+                            // locus.setEnd(end);
+                            // locus.setSource(source);
+                            // locus.setAnnotation(annotation);
+                        } catch (InvalidURIException ex) {
+                            Logger.getLogger(ResourceManager.class.getName()).log(Level.SEVERE, null, ex);
+                            throw new ActionException(ex);
+                        }
+
+                        locus = manager.update(UpdateAction.LOCUS, locus,
+                                new ResourceStatus<>() // controllare i tipi generici
+                                .clazz(locus.getClass())
+                                .source(source)
+                                .start(start)
+                                .end(end)
+                                .annotation(annotation)
+                        );
+                        System.err.println("+++ uri " + locus.getUri());
+                        annotation.addLocus(locus);
+                    }
+                }
+
+                return null;
+
+            }
+
+        }.doAction();
+
+    }
+
     public <T extends Content, E extends Annotation.Type> Annotation<T, E>
             createAnnotation(final Class<E> clazz, final AnnotationBuilder<E> builder)
             throws ManagerAction.ActionException {
@@ -131,15 +216,20 @@ public final class ResourceManager {
         return new ManagerAction() {
 
             @Override
-            protected Annotation<T, E> action() {
+            protected Annotation<T, E> action() throws ActionException {
                 System.err.println("createAnnotation() start");
 
                 for (ResourceManagerSPI manager : managers) {
                     manager.register(clazz.getSimpleName(), clazz);
-                    Annotation<T, E> annotation
-                            = manager.create(clazz.getSimpleName(), builder);
+                    Annotation<T, E> annotation;
+                    try {
+                        annotation = manager.create(clazz.getSimpleName(), builder);
+                    } catch (InvalidURIException ex) {
+                        Logger.getLogger(ResourceManager.class.getName()).log(Level.SEVERE, null, ex);
+                        throw new ActionException(ex);
+                    }
                     System.err.println("createAnnotation() end");
-
+///////////////METTERE LA URI !!!!!!!!!!!!!
                     return annotation;
                 }
                 System.err.println("createAnnotation() end null");
@@ -155,6 +245,7 @@ public final class ResourceManager {
  // non dovrebbe mai arrivare qui
 
             }
+         
           
 
 }

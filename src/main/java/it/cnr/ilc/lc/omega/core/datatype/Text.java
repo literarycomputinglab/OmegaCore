@@ -5,16 +5,51 @@
  */
 package it.cnr.ilc.lc.omega.core.datatype;
 
+import it.cnr.ilc.lc.omega.core.ManagerAction;
+import it.cnr.ilc.lc.omega.core.ResourceManager;
 import it.cnr.ilc.lc.omega.entity.Source;
 import it.cnr.ilc.lc.omega.entity.TextContent;
+import java.net.URI;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.activation.MimeType;
+import javax.activation.MimeTypeParseException;
+import sirius.kernel.di.std.Part;
 
 /**
  *
  * @author simone
  */
 public class Text {
-    
+
     private Source<TextContent> source;
+
+    @Part
+    private static ResourceManager resourceManager; //ERROR: l'injection (SIRIUS KERNEL) funziona solo se dichiarata static in quanto richiamata da una new in un metodo static
+
+    private Text(String text, URI uri) throws ManagerAction.ActionException {
+
+        init(text, uri);
+    }
+
+    public static Text of(String text, URI uri) throws ManagerAction.ActionException {
+        System.err.println("Text.of");
+        //FIXME Aggiungere URI della annotazione
+        return new Text(text, uri);
+    }
+
+    private void init(String text, URI uri) throws ManagerAction.ActionException {
+        System.err.println("Text init() " + resourceManager);
+        try {
+            source = resourceManager.createSource(uri,
+                    new MimeType(ResourceManager.OmegaMimeType.PLAIN.toString()));
+///            resourceManager.
+        } catch (MimeTypeParseException ex) {
+            Logger.getLogger(Text.class.getName()).log(Level.SEVERE, null, ex);
+            ex.printStackTrace();
+        }
+
+    }
 
     public Source<TextContent> getSource() {
         return source;

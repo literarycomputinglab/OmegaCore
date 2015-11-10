@@ -14,7 +14,8 @@ import it.cnr.ilc.lc.omega.entity.AnnotationBuilder;
 public class BaseAnnotationBuilder implements AnnotationBuilder<BaseAnnotationType> {
 
     private String text = "";
-
+    private String uri;
+    
     public BaseAnnotationBuilder text(String f) {
         this.text = f;
         return this;
@@ -24,6 +25,16 @@ public class BaseAnnotationBuilder implements AnnotationBuilder<BaseAnnotationTy
     public BaseAnnotationType build(BaseAnnotationType extension) {
         extension.setText(this.text);
         return extension;
+    }
+
+    @Override
+    public void setURI(String uri) {
+        this.uri = uri;
+    } 
+    
+    @Override
+    public String getURI() {
+        return uri;
     }
 
 }

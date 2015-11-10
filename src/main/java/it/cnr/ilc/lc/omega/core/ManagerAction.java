@@ -33,7 +33,7 @@ public abstract class ManagerAction {
         return ret;
     }
 
-    protected abstract <T> T action();
+    protected abstract <T> T action() throws ActionException;
 
     public static class ActionException extends Exception {
 

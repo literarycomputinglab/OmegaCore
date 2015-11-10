@@ -6,14 +6,11 @@
 package it.cnr.ilc.lc.omega.core.annotation;
 
 import it.cnr.ilc.lc.omega.core.ManagerAction;
-import it.cnr.ilc.lc.omega.core.OmegaCore;
 import it.cnr.ilc.lc.omega.core.ResourceManager;
 import it.cnr.ilc.lc.omega.core.datatype.Text;
 import it.cnr.ilc.lc.omega.entity.Annotation;
 import it.cnr.ilc.lc.omega.entity.TextContent;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.activation.MimeTypeParseException;
+import java.net.URI;
 import sirius.kernel.di.std.Part;
 
 /**
@@ -25,28 +22,30 @@ public class BaseAnnotationText {
     private Annotation<TextContent, BaseAnnotationType> annotation;
 
     @Part
-    private static ResourceManager resourceManager; //ERROR: l'injection funziona solo se dichiarata static in quanto richiamata da una new in un metodo static
+    private static ResourceManager resourceManager; //ERROR: l'injection (SIRIUS KERNEL) funziona solo se dichiarata static in quanto richiamata da una new in un metodo static
     
-    private BaseAnnotationText(String text) throws ManagerAction.ActionException {
+    private BaseAnnotationText(String text, URI uri) throws ManagerAction.ActionException {
 
-        init(text);
+        init(text, uri);
     }
 
-    public static BaseAnnotationText of(String text) throws ManagerAction.ActionException {
+    public static BaseAnnotationText of(String text, URI uri) throws ManagerAction.ActionException {
         System.err.println("BaseAnnotationText.of");
-        return new BaseAnnotationText(text);
+        //FIXME Aggiungere URI della annotazione
+        return new BaseAnnotationText(text, uri);
     }
 
-    private void init(String text) throws ManagerAction.ActionException {
+    private void init(String text, URI uri) throws ManagerAction.ActionException {
         System.err.println("BaseAnnotationText init() " + resourceManager);
+        BaseAnnotationBuilder bab = new BaseAnnotationBuilder().text(text);
+        bab.setURI(uri.toASCIIString());
         annotation = resourceManager.createAnnotation(
-                BaseAnnotationType.class,
-                new BaseAnnotationBuilder().text(text));
+                BaseAnnotationType.class, bab );
     }
 
-    public void addLocus(Text text, int start, int end) {
+    public void addLocus(Text text, int start, int end) throws ManagerAction.ActionException {
         
-     //   resourceManager.updateAnnotationLocus(text.getSource(), annotation, start, end);
+     resourceManager.updateTextAnnotationLocus(text.getSource(), annotation, start, end);
     }
     
     public void save() throws ManagerAction.ActionException {
