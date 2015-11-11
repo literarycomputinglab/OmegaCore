@@ -31,9 +31,9 @@ public interface ResourceManagerSPI {
             create(ResourceManager.CreateAction createAction, URI uri) throws InvalidURIException; // considerare anche la creazione di una annotazione attraverso questa funzione? Problema per il passaggio del builder?
     //FIXME: refactoring del metodo come SAVE
 
-    public <T extends SuperNode> T
+    /*public <T extends SuperNode> T
             create(Source<? extends Content> source) throws InvalidURIException;  //considerare una create(T resource) e anche una create(Object o);
-
+*/
     public <T extends Content, E extends Annotation.Type> Annotation<T, E>
             create(String type, AnnotationBuilder<E> builder) throws InvalidURIException; // creazione di una annotazione
 

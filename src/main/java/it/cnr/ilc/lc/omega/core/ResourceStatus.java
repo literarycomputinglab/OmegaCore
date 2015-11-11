@@ -5,24 +5,34 @@
  */
 package it.cnr.ilc.lc.omega.core;
 
-import it.cnr.ilc.lc.omega.core.annotation.BaseAnnotationText;
 import it.cnr.ilc.lc.omega.entity.Annotation;
 import it.cnr.ilc.lc.omega.entity.Content;
 import it.cnr.ilc.lc.omega.entity.Source;
-import java.util.Map;
 
 /**
  *
  * @author simone
+ * @param <T>
+ * @param <E>
  */
-public class ResourceStatus < T extends Content, E extends Annotation.Type> {
+public class ResourceStatus< T extends Content, E extends Annotation.Type> {
 
-   private Class<?> clazz;
-   private int start;
-   private int end;
-   private Source<T> source;
-   private Annotation<T, E> annotation;
+    private Class<?> clazz;
+    private int start;
+    private int end;
+    private Source<T> source;
+    private Annotation<T, E> annotation;
+    private String text;
 
+    public String getText() {
+        return text;
+    }
+
+    public ResourceStatus text(String text) {
+        this.text = text;
+        return this;
+    }
+    
     public Class<?> getClazz() {
         return clazz;
     }
@@ -42,36 +52,34 @@ public class ResourceStatus < T extends Content, E extends Annotation.Type> {
     public Annotation<?, ?> getAnnotation() {
         return annotation;
     }
-    
-    public ResourceStatus(){
-        
+
+    public ResourceStatus() {
+
     }
-    
-    public ResourceStatus clazz(Class<?> clazz){
+
+    public ResourceStatus clazz(Class<?> clazz) {
         this.clazz = clazz;
         return this;
     }
-    
-    public ResourceStatus start(int start){
+
+    public ResourceStatus start(int start) {
         this.start = start;
         return this;
     }
-    
-    public ResourceStatus end(int end){
+
+    public ResourceStatus end(int end) {
         this.end = end;
         return this;
     }
-    
-    public ResourceStatus source(Source<T> source){
+
+    public ResourceStatus source(Source<T> source) {
         this.source = source;
         return this;
     }
-    
-    public ResourceStatus annotation(Annotation<T,E> annotation){
+
+    public ResourceStatus annotation(Annotation<T, E> annotation) {
         this.annotation = annotation;
         return this;
     }
-    
-    
-    
+
 }

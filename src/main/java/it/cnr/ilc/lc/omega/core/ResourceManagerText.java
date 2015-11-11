@@ -15,6 +15,7 @@ import it.cnr.ilc.lc.omega.exception.InvalidURIException;
 import java.io.BufferedInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URLConnection;
 import java.util.Scanner;
@@ -31,7 +32,7 @@ import sirius.kernel.di.std.Register;
  *
  * @author oakgen
  */
-@Register(classes = ResourceManagerSPI.class, name = "claviustext")
+@Register(classes = ResourceManagerSPI.class, name = "text")
 public class ResourceManagerText implements ResourceManagerSPI {
 
     private final MimeType mimeType;
@@ -51,7 +52,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
     }
 
     @Override
-    public <T extends SuperNode> T create(ResourceManager.CreateAction createAction, URI uri) throws InvalidURIException{
+    public <T extends SuperNode> T create(ResourceManager.CreateAction createAction, URI uri) throws InvalidURIException {
         switch (createAction) {
             case SOURCE:
                 return (T) createSource(uri);
@@ -101,6 +102,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
             case FOLDER:
                 updateFolder(sourceUri, targetUri);
                 break;
+
             default:
                 throw new UnsupportedOperationException(updateAction.name() + " unsupported");
         }
@@ -115,17 +117,21 @@ public class ResourceManagerText implements ResourceManagerSPI {
     }
 
     private TextContent createContent(URI uri) throws InvalidURIException {
+
         TextContent content = Content.contentOf(TextContent.class); // non mi piace il tipo così specifico
+
+        content.setUri(uri.toASCIIString());
 
         try {
             //controllare che la risorsa non sia già presente con lo stesso URI
-            URLConnection site = uri.toURL().openConnection();
-            content.setUri(uri.toASCIIString());
+            URLConnection site = uri.toURL().openConnection(); //PER CARICARE RISORSA REMOTA
             content.setText(new Scanner(new BufferedInputStream(site.getInputStream()), "UTF-8").useDelimiter(Pattern.compile("\\A")).next());
         } catch (FileNotFoundException ex) {
             Logger.getLogger(ResourceManagerText.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(ResourceManagerText.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException  | IllegalArgumentException ex) {
+            Logger.getLogger(ResourceManagerText.class.getName()).log(Level.WARNING, null, ex);
+            //LA RISORSA NON E' REMOTA
+            content.setText("");
         }
 
         return content;
@@ -153,7 +159,6 @@ public class ResourceManagerText implements ResourceManagerSPI {
      }
      session.getTransaction().commit();
      } */
-    
     private Folder createFolder(URI uri) {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         Folder folder = new Folder();
@@ -178,7 +183,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
             create(String type, AnnotationBuilder<E> builder) throws InvalidURIException {
 
         Annotation<T, E> annotation = Annotation.newAnnotation(type, builder);
-        
+
         return annotation;
     }
 
@@ -191,16 +196,11 @@ public class ResourceManagerText implements ResourceManagerSPI {
     }
 
     private TextLocus createLocus(URI uri) throws InvalidURIException {
-        
+
         TextLocus locus = Locus.locusOf(TextLocus.class, Locus.PointsTo.CONTENT);
         locus.setUri(uri.toASCIIString());
         return locus;
-        
-    }
 
-    @Override
-    public <T extends SuperNode> T create(Source<? extends Content> source) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -215,11 +215,13 @@ public class ResourceManagerText implements ResourceManagerSPI {
 
     @Override
     public <T extends SuperNode> T update(ResourceManager.UpdateAction updateAction, T resource, ResourceStatus status) {
-        switch (updateAction){
+        switch (updateAction) {
             case LOCUS:
-                return (T) updateTextLocus((TextLocus)resource, status); // controllare i cast per i tipi parmetrici
-             default:
-                 throw new UnsupportedOperationException(updateAction.name() + " unsupported");
+                return (T) updateTextLocus((TextLocus) resource, status); // controllare i cast per i tipi parmetrici
+            case CONTENT:
+                return (T) updateTextContent((TextContent) resource, status);
+            default:
+                throw new UnsupportedOperationException(updateAction.name() + " unsupported");
         }
     }
 
@@ -228,8 +230,14 @@ public class ResourceManagerText implements ResourceManagerSPI {
         locus.setStart(status.getStart());
         locus.setEnd(status.getEnd());
         locus.setAnnotation(status.getAnnotation());
-        System.err.println("******** uri " + locus.getUri());
+        //System.err.println("******** uri " + locus.getUri());
         return locus;
+    }
+
+    private TextContent updateTextContent(TextContent content, ResourceStatus status) {
+
+        content.setText(status.getText());
+        return content;
     }
 
 }

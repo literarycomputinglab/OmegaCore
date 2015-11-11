@@ -5,7 +5,6 @@ import it.cnr.ilc.lc.omega.entity.Annotation;
 import it.cnr.ilc.lc.omega.entity.AnnotationBuilder;
 import it.cnr.ilc.lc.omega.entity.Content;
 import it.cnr.ilc.lc.omega.entity.Source;
-import it.cnr.ilc.lc.omega.entity.SuperNode;
 import it.cnr.ilc.lc.omega.entity.TextContent;
 import it.cnr.ilc.lc.omega.entity.TextLocus;
 import it.cnr.ilc.lc.omega.exception.InvalidURIException;
@@ -78,7 +77,7 @@ public final class ResourceManager {
                             Logger.getLogger(ResourceManager.class.getName()).log(Level.SEVERE, null, ex);
                             throw new ManagerAction.ActionException(ex);
                         }
-                        
+
                     }
                 }
                 return null;
@@ -88,30 +87,32 @@ public final class ResourceManager {
         //TODO: se il metodo non trova un manager appropriato non crea il source e quindi solleva un eccezione
     }
 
-    public void createSourceContent(final Source<? extends Content> source) throws ManagerAction.ActionException, InvalidURIException {
+    public <T extends Content> T createSourceContent(final Source<T> source) throws ManagerAction.ActionException, InvalidURIException {
         // System.err.println("createSourceContent: (" + source.toString()+ ")");
-        new ManagerAction() { // FIXME attenzione questa soluzione presenta un problema con la session.getTeransaction().commit() - capire!!
+        return new ManagerAction() { // FIXME attenzione questa soluzione presenta un problema con la session.getTeransaction().commit() - capire!!
 
             @Override
-            protected Boolean action() throws ActionException {
+            protected T action() throws ActionException {
                 System.err.println("CREATESOURCECONTENT: (" + source.toString() + ")");
+                T content = null;
                 for (ResourceManagerSPI manager : managers) {
                     System.err.println("NEL FOR: (" + manager.toString() + ")");
-                    //if (manager.getMimeType().getBaseType().equals(source.getContent().getMimetype())) {
-                    if (manager instanceof ResourceManagerText) {
+                    if (manager.getMimeType().getBaseType().equals(OmegaMimeType.PLAIN.toString())) {
+                        //  if (manager instanceof ResourceManagerText) {
                         try {
-                            manager.create(source);
+                            content = manager.create(CreateAction.CONTENT,
+                                    URI.create(source.getUri().concat("/content/" + System.currentTimeMillis())));
                         } catch (InvalidURIException ex) {
                             Logger.getLogger(ResourceManager.class.getName()).log(Level.SEVERE, null, ex);
                             throw new ActionException(ex);
                         }
                         System.err.println("PRIMA DEL RETURN: (" + manager.toString() + ")");
 
-                        return true;
+                        return content;
                     }
                 }
+                throw new ActionException(new Exception("No suitable manager for the mimetype " + source.getContent().getMimetype()));
 
-                return false;
             }
         ;
     }
@@ -139,7 +140,7 @@ public final class ResourceManager {
         }
     }
 
-    public void saveAnnotation(final Annotation annotation) throws ManagerAction.ActionException {
+    public <T extends Content, E extends Annotation.Type> void saveAnnotation(final Annotation<T, E> annotation) throws ManagerAction.ActionException {
 
         new ManagerAction() {
 
@@ -147,6 +148,23 @@ public final class ResourceManager {
             protected Boolean action() {
                 for (ResourceManagerSPI manager : managers) {
                     manager.save(annotation);
+                    return true;
+                }
+                return false;
+            }
+
+        }.doAction();
+
+    }
+
+    public <T extends Content> void saveSource(final Source<T> source) throws ManagerAction.ActionException {
+
+        new ManagerAction() {
+
+            @Override
+            protected Boolean action() {
+                for (ResourceManagerSPI manager : managers) {
+                    manager.save(source);
                     return true;
                 }
                 return false;
@@ -206,6 +224,25 @@ public final class ResourceManager {
 
         }.doAction();
 
+    }
+
+    public TextContent updateTextContent(final TextContent content, final String text) throws ManagerAction.ActionException {
+        return new ManagerAction() {
+
+            @Override
+            protected TextContent action() throws ManagerAction.ActionException {
+                System.err.println("createAnnotation() start");
+                TextContent ret = content;
+
+                for (ResourceManagerSPI manager : managers) {
+                    if (manager.getMimeType().getBaseType().equals(OmegaMimeType.PLAIN.toString())) {
+                        ret = manager.update(UpdateAction.CONTENT, content, new ResourceStatus().text(text));
+                    }
+                }
+                return ret;
+
+            }
+        }.doAction();
     }
 
     public <T extends Content, E extends Annotation.Type> Annotation<T, E>
