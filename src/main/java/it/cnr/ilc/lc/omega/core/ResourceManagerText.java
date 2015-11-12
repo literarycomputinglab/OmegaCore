@@ -3,6 +3,7 @@ package it.cnr.ilc.lc.omega.core;
 import it.cnr.ilc.lc.omega.core.persistence.Neo4jSessionFactory;
 import it.cnr.ilc.lc.omega.clavius.catalog.entity.Folder;
 import it.cnr.ilc.lc.omega.core.spi.ResourceManagerSPI;
+import it.cnr.ilc.lc.omega.core.util.Utils;
 import it.cnr.ilc.lc.omega.entity.Annotation;
 import it.cnr.ilc.lc.omega.entity.AnnotationBuilder;
 import it.cnr.ilc.lc.omega.entity.Content;
@@ -120,7 +121,13 @@ public class ResourceManagerText implements ResourceManagerSPI {
 
         TextContent content = Content.contentOf(TextContent.class); // non mi piace il tipo così specifico
 
-        content.setUri(uri.toASCIIString());
+        /*
+         * la uri in input non e' modificata per poter caricare il contenuto della source (puntata da uri)
+         * la uri, che identifica il content, e' costruita con un protocollo specifico (per il momento
+         * tramite concatenazione con "/content/" + System.currentTimeMillis()
+         */
+        content.setUri(Utils.appendContentID(uri));
+        
 
         try {
             //controllare che la risorsa non sia già presente con lo stesso URI
@@ -128,7 +135,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
             content.setText(new Scanner(new BufferedInputStream(site.getInputStream()), "UTF-8").useDelimiter(Pattern.compile("\\A")).next());
         } catch (FileNotFoundException ex) {
             Logger.getLogger(ResourceManagerText.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException  | IllegalArgumentException ex) {
+        } catch (IOException | IllegalArgumentException ex) {
             Logger.getLogger(ResourceManagerText.class.getName()).log(Level.WARNING, null, ex);
             //LA RISORSA NON E' REMOTA
             content.setText("");

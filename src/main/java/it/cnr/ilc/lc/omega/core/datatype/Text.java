@@ -40,7 +40,7 @@ public class Text {
     public static Text of(URI uri) throws ManagerAction.ActionException, InvalidURIException {
         System.err.println("Text.of");
         //FIXME Aggiungere URI della annotazione
-        return new Text(null, uri);
+        return new Text("", uri);
     }
 
     public static Text of(String text, URI uri) throws ManagerAction.ActionException, InvalidURIException {
@@ -55,7 +55,7 @@ public class Text {
             source = resourceManager.createSource(uri,
                     new MimeType(ResourceManager.OmegaMimeType.PLAIN.toString()));
             TextContent content = resourceManager.createSourceContent(source);
-            if (null != text) {
+            if ("".equals(text)) {
                 content = resourceManager.updateTextContent(content, text);
             }
             source.setContent(content);

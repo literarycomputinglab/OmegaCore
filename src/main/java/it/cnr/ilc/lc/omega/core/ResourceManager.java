@@ -4,6 +4,7 @@ import it.cnr.ilc.lc.omega.core.spi.ResourceManagerSPI;
 import it.cnr.ilc.lc.omega.entity.Annotation;
 import it.cnr.ilc.lc.omega.entity.AnnotationBuilder;
 import it.cnr.ilc.lc.omega.entity.Content;
+import it.cnr.ilc.lc.omega.entity.Locus;
 import it.cnr.ilc.lc.omega.entity.Source;
 import it.cnr.ilc.lc.omega.entity.TextContent;
 import it.cnr.ilc.lc.omega.entity.TextLocus;
@@ -101,7 +102,8 @@ public final class ResourceManager {
                         //  if (manager instanceof ResourceManagerText) {
                         try {
                             content = manager.create(CreateAction.CONTENT,
-                                    URI.create(source.getUri().concat("/content/" + System.currentTimeMillis())));
+                                    URI.create(source.getUri()));
+
                         } catch (InvalidURIException ex) {
                             Logger.getLogger(ResourceManager.class.getName()).log(Level.SEVERE, null, ex);
                             throw new ActionException(ex);
@@ -246,7 +248,8 @@ public final class ResourceManager {
     }
 
     public <T extends Content, E extends Annotation.Type> Annotation<T, E>
-            createAnnotation(final Class<E> clazz, final AnnotationBuilder<E> builder)
+            createAnnotation(final Class<E> clazz,
+                    final AnnotationBuilder<E> builder)
             throws ManagerAction.ActionException {
         // TODO gestire opporutnamente le eccezioni
 
@@ -276,13 +279,33 @@ public final class ResourceManager {
         ;
     }
 
-
-.doAction();
-        
- // non dovrebbe mai arrivare qui
-
-            }
+    .doAction();
+    }
          
-          
+    public Locus<TextContent> createLocus(final int start, final int end) throws InvalidURIException, ManagerAction.ActionException {
+        return new ManagerAction() {
+            Locus<TextContent> locus;
+
+            @Override
+            protected Locus<TextContent> action() throws ManagerAction.ActionException {
+
+                for (ResourceManagerSPI manager : managers) {
+                    if (manager.getMimeType().equals(OmegaMimeType.PLAIN.toString())) {
+                        try {
+                            locus = manager.create(CreateAction.LOCUS,
+                                    URI.create("/resourcemanager/createLocus/action/locus/" + System.currentTimeMillis())); //FIXME: da metteer in Utils la creazione delle uri
+                            manager.update(UpdateAction.LOCUS, locus, new ResourceStatus<TextContent, Annotation.Type>().start(start).end(end));
+                            return locus;
+                        } catch (InvalidURIException ex) {
+                            Logger.getLogger(ResourceManager.class.getName()).log(Level.INFO, null, ex);
+                            throw new ManagerAction.ActionException(new Exception("AAAAAAAAAAHHHHHHHH BUG!!!"));
+
+                        }
+                    }
+                }
+                throw new ManagerAction.ActionException(new Exception("No suitable manager for Locus<TextContent>"));
+            }
+        }.doAction();
+    }
 
 }
