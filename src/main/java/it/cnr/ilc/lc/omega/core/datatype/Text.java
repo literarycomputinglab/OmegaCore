@@ -37,6 +37,11 @@ public class Text {
         init(text, uri);
     }
 
+    private Text (Source<TextContent> source) {
+    
+        this.source  = source;
+    }
+    
     public static Text of(URI uri) throws ManagerAction.ActionException, InvalidURIException {
         System.err.println("Text.of");
         //FIXME Aggiungere URI della annotazione
@@ -49,6 +54,12 @@ public class Text {
         return new Text(text, uri);
     }
 
+    public static Text load(URI uri) throws ManagerAction.ActionException {
+        
+        return new Text (resourceManager.loadSource(uri, TextContent.class));
+    }
+    
+    
     private void init(String text, URI uri) throws ManagerAction.ActionException, InvalidURIException {
         System.err.println("Text init() " + resourceManager);
         try {
@@ -71,5 +82,7 @@ public class Text {
 
         resourceManager.saveSource(source);
     }
+    
+    
 
 }

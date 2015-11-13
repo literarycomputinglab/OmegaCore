@@ -16,7 +16,6 @@ import it.cnr.ilc.lc.omega.exception.InvalidURIException;
 import java.io.BufferedInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URLConnection;
 import java.util.Scanner;
@@ -90,6 +89,9 @@ public class ResourceManagerText implements ResourceManagerSPI {
      ex.printStackTrace();
      }
      }
+    
+    
+
      }
      */
     @Override
@@ -127,7 +129,6 @@ public class ResourceManagerText implements ResourceManagerSPI {
          * tramite concatenazione con "/content/" + System.currentTimeMillis()
          */
         content.setUri(Utils.appendContentID(uri));
-        
 
         try {
             //controllare che la risorsa non sia già presente con lo stesso URI
@@ -212,7 +213,10 @@ public class ResourceManagerText implements ResourceManagerSPI {
 
     @Override
     public <T extends SuperNode> T load(URI uri) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        Session session = Neo4jSessionFactory.getNeo4jSession();
+        Source<TextContent> source = session.loadAll(Source.class, new Filter("uri", uri.toASCIIString())).iterator().next();
+   
+        return (T) source;
     }
 
     @Override
@@ -232,18 +236,31 @@ public class ResourceManagerText implements ResourceManagerSPI {
         }
     }
 
-    private TextLocus updateTextLocus(TextLocus locus, ResourceStatus status) {
-        locus.setSource(status.getSource());
-        locus.setStart(status.getStart());
-        locus.setEnd(status.getEnd());
-        locus.setAnnotation(status.getAnnotation());
-        //System.err.println("******** uri " + locus.getUri());
+    private <E extends Annotation.Type> TextLocus
+            updateTextLocus(TextLocus locus, ResourceStatus<TextContent, E> status) {
+
+        if (status.getSource().isPresent()) {
+            locus.setSource(status.getSource().get());
+        }
+
+        if (status.getStart().isPresent()) {
+            locus.setStart(status.getStart().getAsInt());
+        }
+
+        if (status.getEnd().isPresent()) {
+            locus.setEnd(status.getEnd().getAsInt());
+        }
+
+        if (status.getAnnotation().isPresent()) {
+            locus.setAnnotation(status.getAnnotation().get());
+        }
+
         return locus;
     }
 
-    private TextContent updateTextContent(TextContent content, ResourceStatus status) {
+    private <E extends Annotation.Type> TextContent updateTextContent(TextContent content, ResourceStatus<TextContent, E> status) {
 
-        content.setText(status.getText());
+        content.setText(status.getText().get());
         return content;
     }
 

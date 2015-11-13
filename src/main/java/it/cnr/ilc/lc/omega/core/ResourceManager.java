@@ -176,6 +176,22 @@ public final class ResourceManager {
 
     }
 
+    public <T extends Content> Source<T> loadSource(final URI uri, Class<T> clazz) throws ManagerAction.ActionException {
+
+        return new ManagerAction() {
+
+            @Override
+            protected Source<T> action() throws ManagerAction.ActionException {
+                for (ResourceManagerSPI manager : managers) {
+                    return manager.load(uri);
+                }
+                throw new ActionException(new Exception("Unable to load resource at uri " + uri));
+            }
+
+        }.doAction();
+
+    }
+
     //FIXME: Da generalizzare?
     /*public <T extends Content, E extends Annotation.Type> void
      updateTextAnnotationLocus(Source<T> source, Annotation<T, E> annotation, WKT? ) {*/
@@ -282,29 +298,60 @@ public final class ResourceManager {
     .doAction();
     }
          
-    public Locus<TextContent> createLocus(final int start, final int end) throws InvalidURIException, ManagerAction.ActionException {
+    public <T extends Content, L extends Locus<T>> L createLocus(final Source<T> source, final int start, final int end) throws InvalidURIException, ManagerAction.ActionException {
         return new ManagerAction() {
-            Locus<TextContent> locus;
+            L locus;
 
             @Override
-            protected Locus<TextContent> action() throws ManagerAction.ActionException {
+            protected L action() throws ManagerAction.ActionException {
 
                 for (ResourceManagerSPI manager : managers) {
-                    if (manager.getMimeType().equals(OmegaMimeType.PLAIN.toString())) {
+                    if (manager.getMimeType().getBaseType().equals(OmegaMimeType.PLAIN.toString())) { //WARN l'IF dipende da T e non dal tipo del manager
                         try {
                             locus = manager.create(CreateAction.LOCUS,
                                     URI.create("/resourcemanager/createLocus/action/locus/" + System.currentTimeMillis())); //FIXME: da metteer in Utils la creazione delle uri
-                            manager.update(UpdateAction.LOCUS, locus, new ResourceStatus<TextContent, Annotation.Type>().start(start).end(end));
+                            manager.update(UpdateAction.LOCUS, locus,
+                                    new ResourceStatus<TextContent, Annotation.Type>().start(start).end(end).source(source));
                             return locus;
                         } catch (InvalidURIException ex) {
                             Logger.getLogger(ResourceManager.class.getName()).log(Level.INFO, null, ex);
                             throw new ManagerAction.ActionException(new Exception("AAAAAAAAAAHHHHHHHH BUG!!!"));
-
                         }
                     }
                 }
                 throw new ManagerAction.ActionException(new Exception("No suitable manager for Locus<TextContent>"));
             }
+        }.doAction();
+    }
+
+    /**
+     *
+     * @param <T> Tipo del contenuto puntato dal Locus (ovvero Content)
+     * @param <V> Tipo del contenuto della annotazione che punta Content tramite
+     * il locus
+     * @param <E> Tipo della annotazione
+     * @param locus
+     * @param annotation
+     * @throws it.cnr.ilc.lc.omega.core.ManagerAction.ActionException
+     */
+    public <T extends Content, V extends Content, E extends Annotation.Type> void
+            updateAnnotationLocus(final Locus<T> locus, final Annotation<V, E> annotation) throws ManagerAction.ActionException {
+        new ManagerAction() {
+
+            @Override
+            protected Boolean action() throws ManagerAction.ActionException {
+
+                for (ResourceManagerSPI manager : managers) {
+                    if (manager.getMimeType().getBaseType().equals(OmegaMimeType.PLAIN.toString())) {
+                        manager.update(UpdateAction.LOCUS, locus,
+                                new ResourceStatus<V, E>().annotation(annotation));
+                        return true;
+                    }
+                }
+                throw new ManagerAction.ActionException(new Exception("No suitable manager for Locus<TextContent>"));
+            }
+
+            
         }.doAction();
     }
 
