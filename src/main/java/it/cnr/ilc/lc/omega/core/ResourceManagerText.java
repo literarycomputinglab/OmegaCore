@@ -136,8 +136,11 @@ public class ResourceManagerText implements ResourceManagerSPI {
             content.setText(new Scanner(new BufferedInputStream(site.getInputStream()), "UTF-8").useDelimiter(Pattern.compile("\\A")).next());
         } catch (FileNotFoundException ex) {
             Logger.getLogger(ResourceManagerText.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException | IllegalArgumentException ex) {
-            Logger.getLogger(ResourceManagerText.class.getName()).log(Level.WARNING, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(ResourceManagerText.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IllegalArgumentException ex) {
+            //Logger.getLogger(ResourceManagerText.class.getName()).log(Level.WARNING, "Invalid URI: " + uri.toASCIIString(), new IllegalArgumentException("Invalid URI: " + uri.toASCIIString()));
+            Logger.getLogger(ResourceManagerText.class.getName()).log(Level.WARNING, "Invalid URI: {0}", uri.toASCIIString());
             //LA RISORSA NON E' REMOTA
             content.setText("");
         }
@@ -215,7 +218,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
     public <T extends SuperNode> T load(URI uri) {
         Session session = Neo4jSessionFactory.getNeo4jSession();
         Source<TextContent> source = session.loadAll(Source.class, new Filter("uri", uri.toASCIIString())).iterator().next();
-   
+
         return (T) source;
     }
 
@@ -227,6 +230,8 @@ public class ResourceManagerText implements ResourceManagerSPI {
     @Override
     public <T extends SuperNode> T update(ResourceManager.UpdateAction updateAction, T resource, ResourceStatus status) {
         switch (updateAction) {
+            case ANNOTATION:
+                return (T) updateTextAnnotation((Annotation<TextContent, Annotation.Type>) resource, status); // controllare i cast per i tipi parmetrici
             case LOCUS:
                 return (T) updateTextLocus((TextLocus) resource, status); // controllare i cast per i tipi parmetrici
             case CONTENT:
@@ -236,8 +241,18 @@ public class ResourceManagerText implements ResourceManagerSPI {
         }
     }
 
+    private <E extends Annotation.Type> Annotation<TextContent, E>
+            updateTextAnnotation(Annotation<TextContent, E> annotation,
+                    ResourceStatus<TextContent, E, TextContent> status) {
+
+        if (status.getTextLocus().isPresent()) {
+            annotation.addLocus(status.getTextLocus().get());
+        }
+        return annotation;
+    }
+
     private <E extends Annotation.Type> TextLocus
-            updateTextLocus(TextLocus locus, ResourceStatus<TextContent, E> status) {
+            updateTextLocus(TextLocus locus, ResourceStatus<TextContent, E, TextContent> status) {
 
         if (status.getSource().isPresent()) {
             locus.setSource(status.getSource().get());
@@ -258,7 +273,8 @@ public class ResourceManagerText implements ResourceManagerSPI {
         return locus;
     }
 
-    private <E extends Annotation.Type> TextContent updateTextContent(TextContent content, ResourceStatus<TextContent, E> status) {
+    private <E extends Annotation.Type> TextContent
+            updateTextContent(TextContent content, ResourceStatus<TextContent, E, TextContent> status) {
 
         content.setText(status.getText().get());
         return content;

@@ -232,7 +232,9 @@ public final class ResourceManager {
                                 .annotation(annotation)
                         );
                         System.err.println("+++ uri " + locus.getUri());
-                        annotation.addLocus(locus);
+                        manager.update(UpdateAction.ANNOTATION,
+                                annotation,
+                                new ResourceStatus<>().textLocus(locus));
                     }
                 }
 
@@ -298,7 +300,8 @@ public final class ResourceManager {
     .doAction();
     }
          
-    public <T extends Content, L extends Locus<T>> L createLocus(final Source<T> source, final int start, final int end) throws InvalidURIException, ManagerAction.ActionException {
+    public <T extends Content, V extends Content, L extends Locus<V>> L
+            createLocus(final Source<T> source, final int start, final int end, Class<V> contentClazz) throws InvalidURIException, ManagerAction.ActionException {
         return new ManagerAction() {
             L locus;
 
@@ -311,7 +314,11 @@ public final class ResourceManager {
                             locus = manager.create(CreateAction.LOCUS,
                                     URI.create("/resourcemanager/createLocus/action/locus/" + System.currentTimeMillis())); //FIXME: da metteer in Utils la creazione delle uri
                             manager.update(UpdateAction.LOCUS, locus,
-                                    new ResourceStatus<TextContent, Annotation.Type>().start(start).end(end).source(source));
+                                    new ResourceStatus<T, Annotation.Type, V>()
+                                    .start(start)
+                                    .end(end)
+                                    .source(source)
+                                    .pointsTo(Locus.PointsTo.CONTENT));
                             return locus;
                         } catch (InvalidURIException ex) {
                             Logger.getLogger(ResourceManager.class.getName()).log(Level.INFO, null, ex);
@@ -332,10 +339,16 @@ public final class ResourceManager {
      * @param <E> Tipo della annotazione
      * @param locus
      * @param annotation
+     * @param textContentClazz
      * @throws it.cnr.ilc.lc.omega.core.ManagerAction.ActionException
      */
-    public <T extends Content, V extends Content, E extends Annotation.Type> void
-            updateAnnotationLocus(final Locus<T> locus, final Annotation<V, E> annotation) throws ManagerAction.ActionException {
+            
+            //RISOLVERE IL PROBLEMA DEL PASSAGGIO DEL LOCUS: NON SI PUO' PASSARE UN TEXTLOCUS O IMAGELOCUS
+            //PERCHE' ESTENDONO DA UNA CLASSSE DI BASE DI TIPO PARAMETRICO DIVERSO (DA IMAGE CONTENT E DA TEXT CONTENT)
+    public <T extends Content, E extends Annotation.Type, V extends Content> void
+            updateAnnotationLocus(final Locus<V> locus,
+                    final Annotation<T, E> annotation,
+                    final Class<V> textContentClazz) throws ManagerAction.ActionException {
         new ManagerAction() {
 
             @Override
@@ -344,14 +357,15 @@ public final class ResourceManager {
                 for (ResourceManagerSPI manager : managers) {
                     if (manager.getMimeType().getBaseType().equals(OmegaMimeType.PLAIN.toString())) {
                         manager.update(UpdateAction.LOCUS, locus,
-                                new ResourceStatus<V, E>().annotation(annotation));
+                                new ResourceStatus<T, E, V>().annotation(annotation));
+                        manager.update(UpdateAction.ANNOTATION, annotation,
+                                new ResourceStatus<T, E, V>().textLocus((Locus<TextContent>) locus));
                         return true;
                     }
                 }
                 throw new ManagerAction.ActionException(new Exception("No suitable manager for Locus<TextContent>"));
             }
 
-            
         }.doAction();
     }
 

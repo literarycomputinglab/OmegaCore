@@ -9,6 +9,7 @@ import it.cnr.ilc.lc.omega.entity.Annotation;
 import it.cnr.ilc.lc.omega.entity.Content;
 import it.cnr.ilc.lc.omega.entity.Locus;
 import it.cnr.ilc.lc.omega.entity.Source;
+import it.cnr.ilc.lc.omega.entity.TextContent;
 import java.util.Optional;
 import java.util.OptionalInt;
 
@@ -17,8 +18,9 @@ import java.util.OptionalInt;
  * @author simone
  * @param <T>
  * @param <E>
+ * @param <V> FIX DA TOGLIERE LA V
  */
-public class ResourceStatus< T extends Content, E extends Annotation.Type> {
+public class ResourceStatus<T extends Content, E extends Annotation.Type, V extends Content> {
 
     private Class<?> clazz;
     private OptionalInt start = OptionalInt.empty();
@@ -27,6 +29,16 @@ public class ResourceStatus< T extends Content, E extends Annotation.Type> {
     private Optional<Annotation<T, E>> annotation = Optional.empty();
     private Optional<String> text = Optional.empty();
     private Optional<Locus.PointsTo> pointsTo = Optional.empty();
+    private Optional<Locus<TextContent>> textLocus = Optional.empty();
+
+    public Optional<Locus<TextContent>> getTextLocus() {
+        return textLocus;
+    }
+
+    public ResourceStatus textLocus(Locus<TextContent> locus) {
+        this.textLocus = Optional.ofNullable(locus);
+        return this;
+    }
 
     public Optional<String> getText() {
         return text;

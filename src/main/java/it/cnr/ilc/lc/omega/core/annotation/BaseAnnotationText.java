@@ -9,7 +9,11 @@ import it.cnr.ilc.lc.omega.core.ManagerAction;
 import it.cnr.ilc.lc.omega.core.ResourceManager;
 import it.cnr.ilc.lc.omega.core.datatype.Text;
 import it.cnr.ilc.lc.omega.entity.Annotation;
+import it.cnr.ilc.lc.omega.entity.Content;
+import it.cnr.ilc.lc.omega.entity.Locus;
 import it.cnr.ilc.lc.omega.entity.TextContent;
+import it.cnr.ilc.lc.omega.entity.TextLocus;
+import it.cnr.ilc.lc.omega.exception.InvalidURIException;
 import java.net.URI;
 import sirius.kernel.di.std.Part;
 
@@ -23,7 +27,7 @@ public class BaseAnnotationText {
 
     @Part
     private static ResourceManager resourceManager; //ERROR: l'injection (SIRIUS KERNEL) funziona solo se dichiarata static in quanto richiamata da una new in un metodo static
-    
+
     private BaseAnnotationText(String text, URI uri) throws ManagerAction.ActionException {
 
         init(text, uri);
@@ -40,14 +44,16 @@ public class BaseAnnotationText {
         BaseAnnotationBuilder bab = new BaseAnnotationBuilder().text(text);
         bab.setURI(uri);
         annotation = resourceManager.createAnnotation(
-                BaseAnnotationType.class, bab );
+                BaseAnnotationType.class, bab);
     }
 
-    public void addLocus(Text text, int start, int end) throws ManagerAction.ActionException {
-        
-     resourceManager.updateTextAnnotationLocus(text.getSource(), annotation, start, end);
+    public void addLocus(Text text, int start, int end) throws ManagerAction.ActionException, InvalidURIException {
+
+        TextLocus locus = resourceManager.createLocus(text.getSource(), start, end, TextContent.class);
+        resourceManager.updateAnnotationLocus(locus, annotation, TextContent.class);
+///////        resourceManager.updateTextAnnotationLocus(text.getSource(), annotation, start, end);
     }
-    
+
     public void save() throws ManagerAction.ActionException {
 
         resourceManager.saveAnnotation(annotation);
