@@ -20,6 +20,7 @@ import sirius.kernel.di.std.Part;
 /**
  *
  * @author simone
+ * @author angelo
  */
 public class Text {
 
@@ -83,6 +84,7 @@ public class Text {
         resourceManager.saveSource(source);
     }
     
+    // getElement(Granularity)
     
 
 }
