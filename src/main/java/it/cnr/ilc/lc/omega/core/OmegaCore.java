@@ -8,6 +8,8 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import sirius.kernel.Setup;
 
 /**
  *
@@ -108,11 +110,12 @@ public class OmegaCore {
         try {
             System.out.println("IPL completed - Loading Sirius as stage2...");
             System.out.println();
-            System.setProperty("debug", "true");
+         //   System.setProperty("logging", "level = OFF");
+            
             Class.forName("sirius.kernel.Setup", true, loader)
                     .getMethod("createAndStartEnvironment", ClassLoader.class)
                     .invoke(null, loader);
-
+            
 //            final KernelTest test = new KernelTest();
 //            Thread testThread = new Thread(new Runnable() {
 //

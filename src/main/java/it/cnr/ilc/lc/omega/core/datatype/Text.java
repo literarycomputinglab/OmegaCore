@@ -38,11 +38,11 @@ public class Text {
         init(text, uri);
     }
 
-    private Text (Source<TextContent> source) {
-    
-        this.source  = source;
+    private Text(Source<TextContent> source) {
+
+        this.source = source;
     }
-    
+
     public static Text of(URI uri) throws ManagerAction.ActionException, InvalidURIException {
         System.err.println("Text.of");
         //FIXME Aggiungere URI della annotazione
@@ -56,18 +56,17 @@ public class Text {
     }
 
     public static Text load(URI uri) throws ManagerAction.ActionException {
-        
-        return new Text (resourceManager.loadSource(uri, TextContent.class));
+
+        return new Text(resourceManager.loadSource(uri, TextContent.class));
     }
-    
-    
+
     private void init(String text, URI uri) throws ManagerAction.ActionException, InvalidURIException {
         System.err.println("Text init() " + resourceManager);
         try {
             source = resourceManager.createSource(uri,
                     new MimeType(ResourceManager.OmegaMimeType.PLAIN.toString()));
             TextContent content = resourceManager.createSourceContent(source);
-            if ("".equals(text)) {
+            if (!"".equals(text)) {
                 content = resourceManager.updateTextContent(content, text);
             }
             source.setContent(content);
@@ -83,8 +82,11 @@ public class Text {
 
         resourceManager.saveSource(source);
     }
-    
+
     // getElement(Granularity)
-    
+    @Override
+    public String toString() {
+        return getSource().getContent().getText();
+    }
 
 }

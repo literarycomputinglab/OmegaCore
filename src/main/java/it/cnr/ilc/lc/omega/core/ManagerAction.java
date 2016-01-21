@@ -21,7 +21,7 @@ public abstract class ManagerAction {
             System.err.println("PRENDE LA TRANSAZIONE:");
             //System.err.println(session.getTransaction().toString());
 
-            session.getTransaction().commit(); //FIXME la trasazione risulta nulla: capire bene!!
+            session.getTransaction().commit(); //FIXME la transazione risulta nulla: capire bene!!
 
             System.err.println("NELLA DO ACTION DOPO IL COMMIT");
         } catch (Exception e) {

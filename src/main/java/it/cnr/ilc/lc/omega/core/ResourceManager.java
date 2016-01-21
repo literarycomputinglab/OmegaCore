@@ -114,13 +114,9 @@ public final class ResourceManager {
                     }
                 }
                 throw new ActionException(new Exception("No suitable manager for the mimetype " + source.getContent().getMimetype()));
-
             }
-        ;
+        }.doAction();
     }
-
-    .doAction();
-   }
 
     public void setContent(URI sourceUri, URI contentUri) throws InvalidURIException {
         System.err.println("setContent: (" + sourceUri + ", " + contentUri + ")");
@@ -342,9 +338,8 @@ public final class ResourceManager {
      * @param textContentClazz
      * @throws it.cnr.ilc.lc.omega.core.ManagerAction.ActionException
      */
-            
-            //RISOLVERE IL PROBLEMA DEL PASSAGGIO DEL LOCUS: NON SI PUO' PASSARE UN TEXTLOCUS O IMAGELOCUS
-            //PERCHE' ESTENDONO DA UNA CLASSSE DI BASE DI TIPO PARAMETRICO DIVERSO (DA IMAGE CONTENT E DA TEXT CONTENT)
+    //RISOLVERE IL PROBLEMA DEL PASSAGGIO DEL LOCUS: NON SI PUO' PASSARE UN TEXTLOCUS O IMAGELOCUS
+    //PERCHE' ESTENDONO DA UNA CLASSSE DI BASE DI TIPO PARAMETRICO DIVERSO (DA IMAGE CONTENT E DA TEXT CONTENT)
     public <T extends Content, E extends Annotation.Type, V extends Content> void
             updateAnnotationLocus(final Locus<V> locus,
                     final Annotation<T, E> annotation,
