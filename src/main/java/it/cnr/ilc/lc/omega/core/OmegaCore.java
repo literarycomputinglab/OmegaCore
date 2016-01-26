@@ -69,7 +69,8 @@ public class OmegaCore {
         boolean debug = true;
         //boolean debug = Boolean.parseBoolean(System.getProperty("debug"));
         boolean ide = Boolean.parseBoolean(System.getProperty("ide"));
-        File home = new File(System.getProperty("user.dir"));
+        // File home = new File(System.getProperty("user.dir"));
+        File home = new File("/home/simone/NetBeansProjects/OmegaRest/OmegaRest/target/OmegaRest-1.0.0/WEB-INF/");
         System.out.println("IDE Flag: " + ide);
         System.out.println("I N I T I A L   P R O G R A M   L O A D");
         System.out.println("---------------------------------------");
@@ -109,13 +110,14 @@ public class OmegaCore {
 
         try {
             System.out.println("IPL completed - Loading Sirius as stage2...");
-            System.out.println();
-         //   System.setProperty("logging", "level = OFF");
-            
-            Class.forName("sirius.kernel.Setup", true, loader)
+            System.out.println("");
+            //   System.setProperty("logging", "level = OFF");
+
+            /*  Class.forName("sirius.kernel.Setup", true, loader)
                     .getMethod("createAndStartEnvironment", ClassLoader.class)
-                    .invoke(null, loader);
-            
+                    .invoke(null, loader); */
+            Setup.createAndStartEnvironment(loader);
+
 //            final KernelTest test = new KernelTest();
 //            Thread testThread = new Thread(new Runnable() {
 //

@@ -61,7 +61,7 @@ public class Text {
     }
 
     private void init(String text, URI uri) throws ManagerAction.ActionException, InvalidURIException {
-        System.err.println("Text init() " + resourceManager);
+        System.err.println("Text init() resourceManager=(" + resourceManager + ")");
         try {
             source = resourceManager.createSource(uri,
                     new MimeType(ResourceManager.OmegaMimeType.PLAIN.toString()));
