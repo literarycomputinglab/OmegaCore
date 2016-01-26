@@ -1,6 +1,7 @@
 package it.cnr.ilc.lc.omega.core;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -70,7 +71,7 @@ public class OmegaCore {
         //boolean debug = Boolean.parseBoolean(System.getProperty("debug"));
         boolean ide = Boolean.parseBoolean(System.getProperty("ide"));
         // File home = new File(System.getProperty("user.dir"));
-        File home = new File("/home/simone/NetBeansProjects/OmegaRest/OmegaRest/target/OmegaRest-1.0.0/WEB-INF/");
+        File home = new File("/home/angelo/NetBeansProjects/OmegaRest/target/OmegaRest-1.0.0/WEB-INF/"); // FIXME: attenzione risistemare questa parte!
         System.out.println("IDE Flag: " + ide);
         System.out.println("I N I T I A L   P R O G R A M   L O A D");
         System.out.println("---------------------------------------");
@@ -113,10 +114,19 @@ public class OmegaCore {
             System.out.println("");
             //   System.setProperty("logging", "level = OFF");
 
-            /*  Class.forName("sirius.kernel.Setup", true, loader)
-                    .getMethod("createAndStartEnvironment", ClassLoader.class)
-                    .invoke(null, loader); */
-            Setup.createAndStartEnvironment(loader);
+//            Class.forName("sirius.kernel.Setup", true, loader)
+//                    .getMethod("createAndStartEnvironment", ClassLoader.class)
+//                    .invoke(null, loader);
+//            
+            Class<?> clazz = Class.forName("sirius.kernel.Setup", true, loader);
+            System.err.println(clazz);
+            Method startEnv = clazz.getMethod("createAndStartEnvironment", ClassLoader.class);
+            System.err.println(startEnv);
+            Object retu = startEnv.invoke(null, loader);
+            System.err.println(retu);
+
+//            Setup.createAndStartEnvironment(loader);
+            System.out.println("Sirius L O A D E D...");
 
 //            final KernelTest test = new KernelTest();
 //            Thread testThread = new Thread(new Runnable() {
@@ -140,7 +150,9 @@ public class OmegaCore {
 
     public static void stop() {
         try {
+            System.out.println("stopping Sirius" );
             Class.forName("sirius.kernel.Sirius", true, loader).getMethod("stop").invoke(null);
+            System.out.println("stopped Sirius" );
         } catch (Exception ex) {
             ex.printStackTrace();
         }
