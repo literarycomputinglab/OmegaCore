@@ -6,6 +6,7 @@
 package it.cnr.ilc.lc.omega.core.annotation;
 
 import it.cnr.ilc.lc.omega.entity.AbstractAnnotationBuilder;
+import java.net.URI;
 
 
 /**
@@ -20,6 +21,13 @@ public class BaseAnnotationBuilder extends AbstractAnnotationBuilder<BaseAnnotat
         this.text = f;
         return this;
     }
+    
+    public BaseAnnotationBuilder URI(URI uri) {
+        setURI(uri);
+        return this;
+    }
+    
+    
 
     public BaseAnnotationType build(BaseAnnotationType extension) {
         extension.setText(this.text);
