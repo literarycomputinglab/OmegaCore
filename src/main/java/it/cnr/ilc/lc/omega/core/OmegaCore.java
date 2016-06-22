@@ -71,7 +71,7 @@ public class OmegaCore {
         //boolean debug = Boolean.parseBoolean(System.getProperty("debug"));
         boolean ide = Boolean.parseBoolean(System.getProperty("ide"));
         // File home = new File(System.getProperty("user.dir"));
-        File home = new File("/home/angelo/NetBeansProjects/OmegaRest/target/OmegaRest-1.0.0/WEB-INF/"); // FIXME: attenzione risistemare questa parte!
+        File home = new File("/home/simone/NetBeansProjects/OmegaRest/OmegaRest/target/OmegaRest-1.0.0/WEB-INF/"); // FIXME: attenzione risistemare questa parte!
         System.out.println("IDE Flag: " + ide);
         System.out.println("I N I T I A L   P R O G R A M   L O A D");
         System.out.println("---------------------------------------");
@@ -119,11 +119,11 @@ public class OmegaCore {
 //                    .invoke(null, loader);
 //            
             Class<?> clazz = Class.forName("sirius.kernel.Setup", true, loader);
-            System.err.println(clazz);
+            System.err.println("OmegaCore clazz " + clazz);
             Method startEnv = clazz.getMethod("createAndStartEnvironment", ClassLoader.class);
-            System.err.println(startEnv);
+            System.err.println("OmegaCore startEnv " + startEnv);
             Object retu = startEnv.invoke(null, loader);
-            System.err.println(retu);
+            System.err.println("OmegaCore startEnv retu " + retu);
 
 //            Setup.createAndStartEnvironment(loader);
             System.out.println("Sirius L O A D E D...");
@@ -150,9 +150,9 @@ public class OmegaCore {
 
     public static void stop() {
         try {
-            System.out.println("stopping Sirius" );
+            System.out.println("stopping Sirius");
             Class.forName("sirius.kernel.Sirius", true, loader).getMethod("stop").invoke(null);
-            System.out.println("stopped Sirius" );
+            System.out.println("stopped Sirius");
         } catch (Exception ex) {
             ex.printStackTrace();
         }

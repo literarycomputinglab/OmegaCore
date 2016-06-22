@@ -5,7 +5,6 @@ import it.cnr.ilc.lc.omega.core.ResourceStatus;
 import it.cnr.ilc.lc.omega.entity.Annotation;
 import it.cnr.ilc.lc.omega.entity.AnnotationBuilder;
 import it.cnr.ilc.lc.omega.entity.Content;
-import it.cnr.ilc.lc.omega.entity.Source;
 import it.cnr.ilc.lc.omega.entity.SuperNode;
 import it.cnr.ilc.lc.omega.exception.InvalidURIException;
 import java.net.URI;
@@ -24,7 +23,7 @@ public interface ResourceManagerSPI {
      */
     public MimeType getMimeType();
 
-    public void register(String type, Class<? extends Annotation.Type> clazz);
+    public void register(String type, Class<? extends Annotation.Data> clazz);
 
     /* CREATE */
     public <T extends SuperNode> T
@@ -33,8 +32,8 @@ public interface ResourceManagerSPI {
 
     /*public <T extends SuperNode> T
             create(Source<? extends Content> source) throws InvalidURIException;  //considerare una create(T resource) e anche una create(Object o);
-*/
-    public <T extends Content, E extends Annotation.Type> Annotation<T, E>
+     */
+    public <T extends Content, E extends Annotation.Data> Annotation<T, E>
             create(String type, AnnotationBuilder<E> builder) throws InvalidURIException; // creazione di una annotazione
 
     /* UPDATE */

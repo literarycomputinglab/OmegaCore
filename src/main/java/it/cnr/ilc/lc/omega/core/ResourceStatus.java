@@ -20,7 +20,7 @@ import java.util.OptionalInt;
  * @param <E>
  * @param <V> FIX DA TOGLIERE LA V
  */
-public class ResourceStatus<T extends Content, E extends Annotation.Type, V extends Content> {
+public class ResourceStatus<T extends Content, E extends Annotation.Data, V extends Content> {
 
     private Class<?> clazz;
     private OptionalInt start = OptionalInt.empty();

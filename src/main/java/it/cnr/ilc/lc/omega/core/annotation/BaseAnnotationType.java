@@ -11,7 +11,7 @@ import it.cnr.ilc.lc.omega.entity.Annotation;
  *
  * @author angelo
  */
-public class BaseAnnotationType extends Annotation.Type {
+public class BaseAnnotationType extends Annotation.Data {
 
     private String text;
     
@@ -24,9 +24,14 @@ public class BaseAnnotationType extends Annotation.Type {
     }
 
 //    @Override
-//    public <T extends Annotation.Type> T build(Builder<T> builder) {
+//    public <T extends Annotation.Data> T build(Builder<T> builder) {
 //        this.builder = (Builder<BaseAnnotationExtension>) builder;
 //        return (T) this.builder.build(this);
 //    }
+
+    @Override
+    public <E extends Annotation.Data> E get() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 
 }

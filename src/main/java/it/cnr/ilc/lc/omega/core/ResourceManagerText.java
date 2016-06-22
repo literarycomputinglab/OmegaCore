@@ -1,7 +1,5 @@
 package it.cnr.ilc.lc.omega.core;
 
-import it.cnr.ilc.lc.omega.core.persistence.Neo4jSessionFactory;
-import it.cnr.ilc.lc.omega.clavius.catalog.entity.Folder;
 import it.cnr.ilc.lc.omega.core.spi.ResourceManagerSPI;
 import it.cnr.ilc.lc.omega.core.util.Utils;
 import it.cnr.ilc.lc.omega.entity.Annotation;
@@ -24,8 +22,7 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
-import org.neo4j.ogm.cypher.Filter;
-import org.neo4j.ogm.session.Session;
+import org.hibernate.cfg.NotYetImplementedException;
 import sirius.kernel.di.std.Register;
 
 /**
@@ -47,7 +44,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
     }
 
     @Override
-    public void register(String type, Class<? extends Annotation.Type> clazz) {
+    public void register(String type, Class<? extends Annotation.Data> clazz) {
         Annotation.register(type, clazz);
     }
 
@@ -58,8 +55,8 @@ public class ResourceManagerText implements ResourceManagerSPI {
                 return (T) createSource(uri);
             case CONTENT:
                 return (T) createContent(uri);
-            case FOLDER:
-                return (T) createFolder(uri);
+//            case FOLDER:
+//                return (T) createFolder(uri);
             case LOCUS:
                 return (T) createLocus(uri);
             default:
@@ -67,33 +64,6 @@ public class ResourceManagerText implements ResourceManagerSPI {
         }
     }
 
-    /*
-     @Override
-     public void create(Source<? extends Content> source) {
-        
-     Session session = Neo4jSessionFactory.getNeo4jSession();
-     try {
-     System.err.println("NELL CREATE PRIMA DELLA SESSION");
-
-     session.beginTransaction(); //FIXME da spostare nel metodo chiamante, ma al momento non funziona le commit all'uscita
-     System.err.println("NELL CREATE DOPO LA SESSION");
-     session.save(source);
-     System.err.println("NELL CREATE DOPO LA SALVA");
-     session.getTransaction().commit();
-     System.err.println("NELL CREATE DOPO LA COMMIT");
-     } catch (Exception e) {
-     System.err.println("NEL CATCH DELLA CREATE PER LA COMMIT");
-     try {
-     session.getTransaction().rollback();
-     } catch (Exception ex) {
-     ex.printStackTrace();
-     }
-     }
-    
-    
-
-     }
-     */
     @Override
     public void update(ResourceManager.UpdateAction updateAction, URI sourceUri, URI targetUri) {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
@@ -102,9 +72,9 @@ public class ResourceManagerText implements ResourceManagerSPI {
             case CONTENT:
                 updateContent(sourceUri, targetUri);
                 break;
-            case FOLDER:
-                updateFolder(sourceUri, targetUri);
-                break;
+//            case FOLDER:
+//                updateFolder(sourceUri, targetUri);
+//                break;
 
             default:
                 throw new UnsupportedOperationException(updateAction.name() + " unsupported");
@@ -113,7 +83,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
 
     private Source<TextContent> createSource(URI uri) throws InvalidURIException {
         // controllare che la risorsa non sia già presente con lo stesso URI
-        Source<TextContent> source = Source.sourceOf(TextContent.class);
+        Source<TextContent> source = Source.sourceOf(TextContent.class, uri);
         source.setUri(uri.toASCIIString());
         System.err.println("source uri: " + uri.toASCIIString());
         return source;
@@ -150,47 +120,39 @@ public class ResourceManagerText implements ResourceManagerSPI {
 
     private void updateContent(URI sourceUri, URI targetUri) {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        Session session = Neo4jSessionFactory.getNeo4jSession();
-        session.beginTransaction();
-        Source<TextContent> source = session.loadAll(Source.class, new Filter("uri", sourceUri.toASCIIString())).iterator().next();
-        source.setContent(session.loadAll(TextContent.class, new Filter("uri", targetUri.toASCIIString())).iterator().next());
-        session.save(source);
-        session.getTransaction().commit();
+//        Session session = Neo4jSessionFactory.getNeo4jSession();
+//        session.beginTransaction();
+//        Source<TextContent> source = session.loadAll(Source.class, new Filter("uri", sourceUri.toASCIIString())).iterator().next();
+//        source.setContent(session.loadAll(TextContent.class, new Filter("uri", targetUri.toASCIIString())).iterator().next());
+//        session.save(source);
+//        session.getTransaction().commit();
+        throw new UnsupportedOperationException("to be implemented");
+
     }
 
-    /*
-     private Folder createFolder(URI uri) {
-     //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-     Session session = Neo4jSessionFactory.getNeo4jSession();
-     session.beginTransaction();
-     if (!session.loadAll(Folder.class, new Filter("name", uri.toASCIIString())).iterator().hasNext()) {
-     Folder folder = new Folder();
-     folder.setName(uri.toASCIIString());
-     session.save(folder);
-     }
-     session.getTransaction().commit();
-     } */
-    private Folder createFolder(URI uri) {
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        Folder folder = new Folder();
-        folder.setName(uri.toASCIIString());
-        return folder;
-    }
-
-    private void updateFolder(URI sourceUri, URI targetUri) {
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        Session session = Neo4jSessionFactory.getNeo4jSession();
-        session.beginTransaction();
-        Folder folder = session.loadAll(Folder.class, new Filter("name", sourceUri.toASCIIString())).iterator().next();
-        /*TODO controllare se URI target e' un Source oppure un folder. Se è un folder va chiamato il metodo folder.addFolder*/
-        Source<TextContent> source = session.loadAll(Source.class, new Filter("uri", targetUri.toASCIIString())).iterator().next();
-        folder.addFile(source);
-        session.save(folder);
-        session.getTransaction().commit();
-    }
+ 
+    // CLAVIUS
+//    private Folder createFolder(URI uri) {
+//        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//        Folder folder = new Folder();
+//        folder.setName(uri.toASCIIString());
+//        return folder;
+//    }
+//
+//    private void updateFolder(URI sourceUri, URI targetUri) {
+//        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//        Session session = Neo4jSessionFactory.getNeo4jSession();
+//        session.beginTransaction();
+//        Folder folder = session.loadAll(Folder.class, new Filter("name", sourceUri.toASCIIString())).iterator().next();
+//        /*TODO controllare se URI target e' un Source oppure un folder. Se è un folder va chiamato il metodo folder.addFolder*/
+//        Source<TextContent> source = session.loadAll(Source.class, new Filter("uri", targetUri.toASCIIString())).iterator().next();
+//        folder.addFile(source);
+//        session.save(folder);
+//        session.getTransaction().commit();
+//    }
 
     @Override
-    public <T extends Content, E extends Annotation.Type> Annotation<T, E>
+    public <T extends Content, E extends Annotation.Data> Annotation<T, E>
             create(String type, AnnotationBuilder<E> builder) throws InvalidURIException {
 
         Annotation<T, E> annotation = Annotation.newAnnotation(type, builder);
@@ -201,14 +163,15 @@ public class ResourceManagerText implements ResourceManagerSPI {
     @Override
     public <T extends SuperNode> void save(T resource) {
 
-        Session session = Neo4jSessionFactory.getNeo4jSession();
-        session.save(resource);
+//        Session session = Neo4jSessionFactory.getNeo4jSession();
+//        session.save(resource);
+        throw new UnsupportedOperationException("to be implemented");
 
     }
 
     private TextLocus createLocus(URI uri) throws InvalidURIException {
 
-        TextLocus locus = Locus.locusOf(TextLocus.class, Locus.PointsTo.CONTENT);
+        TextLocus locus = Locus.locusOf(TextLocus.class, uri, Locus.PointsTo.CONTENT);
         locus.setUri(uri.toASCIIString());
         return locus;
 
@@ -216,10 +179,11 @@ public class ResourceManagerText implements ResourceManagerSPI {
 
     @Override
     public <T extends SuperNode> T load(URI uri) {
-        Session session = Neo4jSessionFactory.getNeo4jSession();
-        Source<TextContent> source = session.loadAll(Source.class, new Filter("uri", uri.toASCIIString())).iterator().next();
-
-        return (T) source;
+//        Session session = Neo4jSessionFactory.getNeo4jSession();
+//        Source<TextContent> source = session.loadAll(Source.class, new Filter("uri", uri.toASCIIString())).iterator().next();
+//
+//        return (T) source;
+        throw new UnsupportedOperationException("to be implemented");
     }
 
     @Override
@@ -231,7 +195,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
     public <T extends SuperNode> T update(ResourceManager.UpdateAction updateAction, T resource, ResourceStatus status) {
         switch (updateAction) {
             case ANNOTATION:
-                return (T) updateTextAnnotation((Annotation<TextContent, Annotation.Type>) resource, status); // controllare i cast per i tipi parmetrici
+                return (T) updateTextAnnotation((Annotation<TextContent, Annotation.Data>) resource, status); // controllare i cast per i tipi parmetrici
             case LOCUS:
                 return (T) updateTextLocus((TextLocus) resource, status); // controllare i cast per i tipi parmetrici
             case CONTENT:
@@ -241,7 +205,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
         }
     }
 
-    private <E extends Annotation.Type> Annotation<TextContent, E>
+    private <E extends Annotation.Data> Annotation<TextContent, E>
             updateTextAnnotation(Annotation<TextContent, E> annotation,
                     ResourceStatus<TextContent, E, TextContent> status) {
 
@@ -251,7 +215,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
         return annotation;
     }
 
-    private <E extends Annotation.Type> TextLocus
+    private <E extends Annotation.Data> TextLocus
             updateTextLocus(TextLocus locus, ResourceStatus<TextContent, E, TextContent> status) {
 
         if (status.getSource().isPresent()) {
@@ -259,21 +223,17 @@ public class ResourceManagerText implements ResourceManagerSPI {
         }
 
         if (status.getStart().isPresent()) {
-            locus.setStart(status.getStart().getAsInt());
+            locus.setStartLocus(status.getStart().getAsInt());
         }
 
         if (status.getEnd().isPresent()) {
-            locus.setEnd(status.getEnd().getAsInt());
-        }
-
-        if (status.getAnnotation().isPresent()) {
-            locus.setAnnotation(status.getAnnotation().get());
+            locus.setEndLocus(status.getEnd().getAsInt());
         }
 
         return locus;
     }
 
-    private <E extends Annotation.Type> TextContent
+    private <E extends Annotation.Data> TextContent
             updateTextContent(TextContent content, ResourceStatus<TextContent, E, TextContent> status) {
 
         content.setText(status.getText().get());

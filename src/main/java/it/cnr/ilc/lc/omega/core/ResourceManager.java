@@ -138,7 +138,8 @@ public final class ResourceManager {
         }
     }
 
-    public <T extends Content, E extends Annotation.Type> void saveAnnotation(final Annotation<T, E> annotation) throws ManagerAction.ActionException {
+    public <T extends Content, E extends Annotation.Data> void 
+        saveAnnotation(final Annotation<T, E> annotation) throws ManagerAction.ActionException {
 
         new ManagerAction() {
 
@@ -189,9 +190,9 @@ public final class ResourceManager {
     }
 
     //FIXME: Da generalizzare?
-    /*public <T extends Content, E extends Annotation.Type> void
+    /*public <T extends Content, E extends Annotation.Data> void
      updateTextAnnotationLocus(Source<T> source, Annotation<T, E> annotation, WKT? ) {*/
-    public <E extends Annotation.Type> void
+    public <E extends Annotation.Data> void
             updateTextAnnotationLocus(final Source<TextContent> source,
                     final Annotation<TextContent, E> annotation,
                     final int start, final int end) throws ManagerAction.ActionException {
@@ -261,7 +262,7 @@ public final class ResourceManager {
         }.doAction();
     }
 
-    public <T extends Content, E extends Annotation.Type> Annotation<T, E>
+    public <T extends Content, E extends Annotation.Data> Annotation<T, E>
             createAnnotation(final Class<E> clazz,
                     final AnnotationBuilder<E> builder)
             throws ManagerAction.ActionException {
@@ -310,7 +311,7 @@ public final class ResourceManager {
                             locus = manager.create(CreateAction.LOCUS,
                                     URI.create("/resourcemanager/createLocus/action/locus/" + System.currentTimeMillis())); //FIXME: da metteer in Utils la creazione delle uri
                             manager.update(UpdateAction.LOCUS, locus,
-                                    new ResourceStatus<T, Annotation.Type, V>()
+                                    new ResourceStatus<T, Annotation.Data, V>()
                                     .start(start)
                                     .end(end)
                                     .source(source)
@@ -340,7 +341,7 @@ public final class ResourceManager {
      */
     //RISOLVERE IL PROBLEMA DEL PASSAGGIO DEL LOCUS: NON SI PUO' PASSARE UN TEXTLOCUS O IMAGELOCUS
     //PERCHE' ESTENDONO DA UNA CLASSSE DI BASE DI TIPO PARAMETRICO DIVERSO (DA IMAGE CONTENT E DA TEXT CONTENT)
-    public <T extends Content, E extends Annotation.Type, V extends Content> void
+    public <T extends Content, E extends Annotation.Data, V extends Content> void
             updateAnnotationLocus(final Locus<V> locus,
                     final Annotation<T, E> annotation,
                     final Class<V> textContentClazz) throws ManagerAction.ActionException {

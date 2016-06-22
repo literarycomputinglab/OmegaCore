@@ -1,7 +1,11 @@
 package it.cnr.ilc.lc.omega.core;
 
-import it.cnr.ilc.lc.omega.core.persistence.Neo4jSessionFactory;
-import org.neo4j.ogm.session.Session;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import sirius.kernel.di.std.Part;
+import it.cnr.ilc.lc.omega.persistence.PersistenceHandler;
+import javax.persistence.EntityManager;
+import sirius.kernel.commons.Exec;
 
 /**
  *
@@ -9,26 +13,33 @@ import org.neo4j.ogm.session.Session;
  */
 public abstract class ManagerAction {
 
+    private static Logger log = LogManager.getLogger(ManagerAction.class);
+
+    @Part
+    PersistenceHandler persistence;
+
     public <T> T doAction() throws ActionException {
-        Session session = Neo4jSessionFactory.getNeo4jSession();
         T ret = null;
-
+        EntityManager entityManager = null;
         try {
-            session.beginTransaction();
-            System.err.println(session.toString());
+            entityManager = persistence.getEntityManager();
+            entityManager.getTransaction().begin();
+            log.info("Transaction is in progress? " + entityManager.getTransaction().isActive());
             ret = action();
-            System.err.println("NELLA DO ACTION DOPO LA ACTION");
-            System.err.println("PRENDE LA TRANSAZIONE:");
+            log.debug("after action()");
             //System.err.println(session.getTransaction().toString());
+            entityManager.getTransaction().commit();
 
-            session.getTransaction().commit(); //FIXME la transazione risulta nulla: capire bene!!
-
-            System.err.println("NELLA DO ACTION DOPO IL COMMIT");
+            log.debug("after commit transaction");
         } catch (Exception e) {
-            System.err.println("NELLA catch DEL COMMIT");
-           // session.getTransaction().rollback();
-            e.printStackTrace();
+            log.error("In transaction ", e);
             throw new ActionException(e);
+        } finally {
+            try {
+                entityManager.close();
+            } catch (Exception ee) {
+                log.error("Closing entityManager ", ee);
+            }
         }
         return ret;
     }
