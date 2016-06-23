@@ -11,10 +11,10 @@ import it.cnr.ilc.lc.omega.entity.Source;
 import it.cnr.ilc.lc.omega.entity.TextContent;
 import it.cnr.ilc.lc.omega.exception.InvalidURIException;
 import java.net.URI;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import sirius.kernel.di.std.Part;
 
 /**
@@ -23,6 +23,8 @@ import sirius.kernel.di.std.Part;
  * @author angelo
  */
 public class Text {
+
+    private static final Logger log = LogManager.getLogger(Text.class);
 
     private Source<TextContent> source;
 
@@ -44,24 +46,25 @@ public class Text {
     }
 
     public static Text of(URI uri) throws ManagerAction.ActionException, InvalidURIException {
-        System.err.println("Text.of");
+        log.info("uri " + uri);
         //FIXME Aggiungere URI della annotazione
         return new Text("", uri);
     }
 
     public static Text of(String text, URI uri) throws ManagerAction.ActionException, InvalidURIException {
-        System.err.println("Text.of");
+        log.info("text " + text + "uri " + uri);
         //FIXME Aggiungere URI della annotazione
         return new Text(text, uri);
     }
 
     public static Text load(URI uri) throws ManagerAction.ActionException {
+        log.info("uri " + uri);
 
         return new Text(resourceManager.loadSource(uri, TextContent.class));
     }
 
     private void init(String text, URI uri) throws ManagerAction.ActionException, InvalidURIException {
-        System.err.println("Text init() resourceManager=(" + resourceManager + ")");
+        log.info("resourceManager=(" + resourceManager + ")");
         try {
             source = resourceManager.createSource(uri,
                     new MimeType(ResourceManager.OmegaMimeType.PLAIN.toString()));
@@ -72,15 +75,16 @@ public class Text {
             source.setContent(content);
 
         } catch (MimeTypeParseException ex) {
-            Logger.getLogger(Text.class.getName()).log(Level.SEVERE, null, ex);
-            ex.printStackTrace();
+            log.error("in init()", ex);
         }
 
     }
 
     public void save() throws ManagerAction.ActionException {
-
+        log.info("saving...");
         resourceManager.saveSource(source);
+        log.info("saved...");
+
     }
 
     // getElement(Granularity)

@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 import sirius.kernel.di.std.Part;
 import it.cnr.ilc.lc.omega.persistence.PersistenceHandler;
 import javax.persistence.EntityManager;
-import sirius.kernel.commons.Exec;
 
 /**
  *
@@ -16,12 +15,13 @@ public abstract class ManagerAction {
     private static Logger log = LogManager.getLogger(ManagerAction.class);
 
     @Part
-    PersistenceHandler persistence;
+    static PersistenceHandler persistence;
 
     public <T> T doAction() throws ActionException {
         T ret = null;
         EntityManager entityManager = null;
         try {
+            log.info("persistence is " + persistence);
             entityManager = persistence.getEntityManager();
             entityManager.getTransaction().begin();
             log.info("Transaction is in progress? " + entityManager.getTransaction().isActive());

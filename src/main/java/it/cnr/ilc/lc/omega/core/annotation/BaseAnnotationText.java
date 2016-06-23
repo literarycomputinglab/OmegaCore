@@ -9,12 +9,12 @@ import it.cnr.ilc.lc.omega.core.ManagerAction;
 import it.cnr.ilc.lc.omega.core.ResourceManager;
 import it.cnr.ilc.lc.omega.core.datatype.Text;
 import it.cnr.ilc.lc.omega.entity.Annotation;
-import it.cnr.ilc.lc.omega.entity.Content;
-import it.cnr.ilc.lc.omega.entity.Locus;
 import it.cnr.ilc.lc.omega.entity.TextContent;
 import it.cnr.ilc.lc.omega.entity.TextLocus;
 import it.cnr.ilc.lc.omega.exception.InvalidURIException;
 import java.net.URI;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import sirius.kernel.di.std.Part;
 
 /**
@@ -22,6 +22,8 @@ import sirius.kernel.di.std.Part;
  * @author simone
  */
 public class BaseAnnotationText {
+
+    private static final Logger log = LogManager.getLogger(BaseAnnotationText.class);
 
     private Annotation<TextContent, BaseAnnotationType> annotation;
 
@@ -34,13 +36,13 @@ public class BaseAnnotationText {
     }
 
     public static BaseAnnotationText of(String text, URI uri) throws ManagerAction.ActionException {
-        System.err.println("BaseAnnotationText.of");
+        log.info("BaseAnnotationText.of: text=(" + text + "), uri=(" + uri + ")");
         //FIXME Aggiungere URI della annotazione
         return new BaseAnnotationText(text, uri);
     }
 
     private void init(String text, URI uri) throws ManagerAction.ActionException {
-        System.err.println("BaseAnnotationText init() " + resourceManager);
+        log.info("BaseAnnotationText init() resourceManager=(" + resourceManager + ")");
         BaseAnnotationBuilder bab = new BaseAnnotationBuilder().text(text);
         bab.setURI(uri);
         annotation = resourceManager.createAnnotation(
@@ -48,14 +50,14 @@ public class BaseAnnotationText {
     }
 
     public void addLocus(Text text, int start, int end) throws ManagerAction.ActionException, InvalidURIException {
-
+        log.info("start " + start + ", end " + end);
         TextLocus locus = resourceManager.createLocus(text.getSource(), start, end, TextContent.class);
         resourceManager.updateAnnotationLocus(locus, annotation, TextContent.class);
 ///////        resourceManager.updateTextAnnotationLocus(text.getSource(), annotation, start, end);
     }
 
     public void save() throws ManagerAction.ActionException {
-
+        log.info("save()");
         resourceManager.saveAnnotation(annotation);
     }
 

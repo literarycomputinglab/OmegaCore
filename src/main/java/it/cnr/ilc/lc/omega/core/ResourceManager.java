@@ -11,9 +11,9 @@ import it.cnr.ilc.lc.omega.entity.TextLocus;
 import it.cnr.ilc.lc.omega.exception.InvalidURIException;
 import java.net.URI;
 import java.util.Collection;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.activation.MimeType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import sirius.kernel.di.std.Parts;
 import sirius.kernel.di.std.Register;
 
@@ -23,6 +23,8 @@ import sirius.kernel.di.std.Register;
  */
 @Register(classes = ResourceManager.class)
 public final class ResourceManager {
+
+    private static final Logger log = LogManager.getLogger(ResourceManager.class);
 
     public enum CreateAction {
 
@@ -68,14 +70,14 @@ public final class ResourceManager {
 
             @Override
             protected Source<T> action() throws ActionException {
-                System.err.println("createSource: (" + uri + ", " + mimeType.getBaseType() + ")");
+                log.info("createSource: (" + uri + ", " + mimeType.getBaseType() + ")");
                 for (ResourceManagerSPI manager : managers) {
                     if (manager.getMimeType().getBaseType().equals(mimeType.getBaseType())) {
                         try {
                             Source<T> source = manager.create(CreateAction.SOURCE, uri);
                             return source;
                         } catch (InvalidURIException ex) {
-                            Logger.getLogger(ResourceManager.class.getName()).log(Level.SEVERE, null, ex);
+                            log.error("creating source", ex);
                             throw new ManagerAction.ActionException(ex);
                         }
 
@@ -94,10 +96,10 @@ public final class ResourceManager {
 
             @Override
             protected T action() throws ActionException {
-                System.err.println("CREATESOURCECONTENT: (" + source.toString() + ")");
+                log.info("action(): (" + source.toString() + ")");
                 T content = null;
                 for (ResourceManagerSPI manager : managers) {
-                    System.err.println("NEL FOR: (" + manager.toString() + ")");
+                    log.info("manager" + manager.toString() + ")");
                     if (manager.getMimeType().getBaseType().equals(OmegaMimeType.PLAIN.toString())) {
                         //  if (manager instanceof ResourceManagerText) {
                         try {
@@ -105,21 +107,20 @@ public final class ResourceManager {
                                     URI.create(source.getUri()));
 
                         } catch (InvalidURIException ex) {
-                            Logger.getLogger(ResourceManager.class.getName()).log(Level.SEVERE, null, ex);
+                            log.error("creating source content", ex);
                             throw new ActionException(ex);
                         }
-                        System.err.println("PRIMA DEL RETURN: (" + manager.toString() + ")");
-
                         return content;
                     }
                 }
+                log.error("No suitable manager for the mimetype " + source.getContent().getMimetype());
                 throw new ActionException(new Exception("No suitable manager for the mimetype " + source.getContent().getMimetype()));
             }
         }.doAction();
     }
 
     public void setContent(URI sourceUri, URI contentUri) throws InvalidURIException {
-        System.err.println("setContent: (" + sourceUri + ", " + contentUri + ")");
+        log.info("setContent: sourceUri=(" + sourceUri + "), contentUri=(" + contentUri + ")");
         for (ResourceManagerSPI manager : managers) {
             manager.create(CreateAction.CONTENT, contentUri);
             manager.update(UpdateAction.CONTENT, sourceUri, contentUri);
@@ -130,6 +131,8 @@ public final class ResourceManager {
 
     public void inFolder(String name, URI sourceURI) throws InvalidURIException {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        log.info("inFolder: name=(" + name + "), sourceUri=(" + sourceURI + ")");
+
         for (ResourceManagerSPI manager : managers) {
             manager.create(CreateAction.FOLDER, URI.create(name));
             manager.update(UpdateAction.FOLDER, URI.create(name), sourceURI);
@@ -138,8 +141,8 @@ public final class ResourceManager {
         }
     }
 
-    public <T extends Content, E extends Annotation.Data> void 
-        saveAnnotation(final Annotation<T, E> annotation) throws ManagerAction.ActionException {
+    public <T extends Content, E extends Annotation.Data> void
+            saveAnnotation(final Annotation<T, E> annotation) throws ManagerAction.ActionException {
 
         new ManagerAction() {
 
@@ -182,6 +185,7 @@ public final class ResourceManager {
                 for (ResourceManagerSPI manager : managers) {
                     return manager.load(uri);
                 }
+                log.error("Unable to load resource at uri " + uri);
                 throw new ActionException(new Exception("Unable to load resource at uri " + uri));
             }
 
@@ -216,7 +220,7 @@ public final class ResourceManager {
                             // locus.setSource(source);
                             // locus.setAnnotation(annotation);
                         } catch (InvalidURIException ex) {
-                            Logger.getLogger(ResourceManager.class.getName()).log(Level.SEVERE, null, ex);
+                            log.error("creating a URI ", ex);
                             throw new ActionException(ex);
                         }
 
@@ -228,7 +232,7 @@ public final class ResourceManager {
                                 .end(end)
                                 .annotation(annotation)
                         );
-                        System.err.println("+++ uri " + locus.getUri());
+                        log.info("+++ uri " + locus.getUri());
                         manager.update(UpdateAction.ANNOTATION,
                                 annotation,
                                 new ResourceStatus<>().textLocus(locus));
@@ -248,7 +252,7 @@ public final class ResourceManager {
 
             @Override
             protected TextContent action() throws ManagerAction.ActionException {
-                System.err.println("createAnnotation() start");
+                log.info("createAnnotation() start");
                 TextContent ret = content;
 
                 for (ResourceManagerSPI manager : managers) {
@@ -272,7 +276,7 @@ public final class ResourceManager {
 
             @Override
             protected Annotation<T, E> action() throws ActionException {
-                System.err.println("createAnnotation() start");
+                log.info("createAnnotation() start");
 
                 for (ResourceManagerSPI manager : managers) {
                     manager.register(clazz.getSimpleName(), clazz);
@@ -280,14 +284,14 @@ public final class ResourceManager {
                     try {
                         annotation = manager.create(clazz.getSimpleName(), builder);
                     } catch (InvalidURIException ex) {
-                        Logger.getLogger(ResourceManager.class.getName()).log(Level.SEVERE, null, ex);
-                        throw new ActionException(ex);
+                        log.error("creating annotation for clazz " + clazz.getSimpleName(), ex);
+                            throw new ActionException(ex);
                     }
-                    System.err.println("createAnnotation() end");
+                    log.info("createAnnotation() end");
 ///////////////METTERE LA URI !!!!!!!!!!!!!
                     return annotation;
                 }
-                System.err.println("createAnnotation() end null");
+                log.warn("createAnnotation() end null");
 
                 return null;
             }
@@ -318,11 +322,13 @@ public final class ResourceManager {
                                     .pointsTo(Locus.PointsTo.CONTENT));
                             return locus;
                         } catch (InvalidURIException ex) {
-                            Logger.getLogger(ResourceManager.class.getName()).log(Level.INFO, null, ex);
+                            log.error("creating a URI ", ex);
                             throw new ManagerAction.ActionException(new Exception("AAAAAAAAAAHHHHHHHH BUG!!!"));
                         }
                     }
                 }
+                log.error("No suitable manager for Locus<TextContent>");
+
                 throw new ManagerAction.ActionException(new Exception("No suitable manager for Locus<TextContent>"));
             }
         }.doAction();
@@ -359,6 +365,7 @@ public final class ResourceManager {
                         return true;
                     }
                 }
+                log.error("No suitable manager for Locus<TextContent>");
                 throw new ManagerAction.ActionException(new Exception("No suitable manager for Locus<TextContent>"));
             }
 

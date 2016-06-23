@@ -18,10 +18,11 @@ import java.net.URI;
 import java.net.URLConnection;
 import java.util.Scanner;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.cfg.NotYetImplementedException;
 import sirius.kernel.di.std.Register;
 
@@ -31,6 +32,8 @@ import sirius.kernel.di.std.Register;
  */
 @Register(classes = ResourceManagerSPI.class, name = "text")
 public class ResourceManagerText implements ResourceManagerSPI {
+
+    private static Logger log = LogManager.getLogger(ManagerAction.class);
 
     private final MimeType mimeType;
 
@@ -85,7 +88,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
         // controllare che la risorsa non sia già presente con lo stesso URI
         Source<TextContent> source = Source.sourceOf(TextContent.class, uri);
         source.setUri(uri.toASCIIString());
-        System.err.println("source uri: " + uri.toASCIIString());
+        log.info("source uri: " + uri.toASCIIString());
         return source;
     }
 
@@ -104,19 +107,19 @@ public class ResourceManagerText implements ResourceManagerSPI {
             //controllare che la risorsa non sia già presente con lo stesso URI
             URLConnection site = uri.toURL().openConnection(); //PER CARICARE RISORSA REMOTA
             content.setText(new Scanner(new BufferedInputStream(site.getInputStream()), "UTF-8").useDelimiter(Pattern.compile("\\A")).next());
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(ResourceManagerText.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(ResourceManagerText.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IllegalArgumentException ex) {
+            
+        } catch (IOException e) {
+            log.error("Opening connection", e);
+        }catch (IllegalArgumentException ex) {
             //Logger.getLogger(ResourceManagerText.class.getName()).log(Level.WARNING, "Invalid URI: " + uri.toASCIIString(), new IllegalArgumentException("Invalid URI: " + uri.toASCIIString()));
-            Logger.getLogger(ResourceManagerText.class.getName()).log(Level.WARNING, "Invalid URI: {0}", uri.toASCIIString());
+            log.warn("Invalid URI " + uri.toASCIIString(),ex);
             //LA RISORSA NON E' REMOTA
             content.setText("");
+        } 
+            return content;
         }
 
-        return content;
-    }
+    
 
     private void updateContent(URI sourceUri, URI targetUri) {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
@@ -130,7 +133,6 @@ public class ResourceManagerText implements ResourceManagerSPI {
 
     }
 
- 
     // CLAVIUS
 //    private Folder createFolder(URI uri) {
 //        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
@@ -150,7 +152,6 @@ public class ResourceManagerText implements ResourceManagerSPI {
 //        session.save(folder);
 //        session.getTransaction().commit();
 //    }
-
     @Override
     public <T extends Content, E extends Annotation.Data> Annotation<T, E>
             create(String type, AnnotationBuilder<E> builder) throws InvalidURIException {

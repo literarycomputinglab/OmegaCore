@@ -1,6 +1,7 @@
 package it.cnr.ilc.lc.omega.core;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
@@ -9,8 +10,8 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import sirius.kernel.Setup;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -18,10 +19,13 @@ import sirius.kernel.Setup;
  */
 public class OmegaCore {
 
+    private static final Logger log = LogManager.getLogger(OmegaCore.class);
+
     private static final int DEFAULT_PORT = 7777;
     private static ClassLoader loader = ClassLoader.getSystemClassLoader();
 
     public static void init(String[] args) {
+        log.info("init() start");
         boolean kill = Boolean.parseBoolean(System.getProperty("kill"));
         int port = DEFAULT_PORT;
         if (System.getProperty("port") != null) {
@@ -44,6 +48,8 @@ public class OmegaCore {
 //                kickstart(port);
             }
         }
+        log.info("init() end");
+
     }
 
     /**
@@ -51,14 +57,13 @@ public class OmegaCore {
      */
     private static void kill(int port) {
         try {
-            System.out.println("Killing localhost: " + port);
+            log.info("Killing localhost: " + port);
             long now = System.currentTimeMillis();
             Socket socket = new Socket("localhost", port);
             socket.getInputStream().read();
-            System.out.println("Kill succeeded after: " + (System.currentTimeMillis() - now) + " ms");
+            log.info("Kill succeeded after: " + (System.currentTimeMillis() - now) + " ms");
         } catch (Exception e) {
-            System.out.println("Kill failed: ");
-            e.printStackTrace();
+            log.error("Kill failed: ", e);
         }
     }
 
@@ -71,11 +76,11 @@ public class OmegaCore {
         //boolean debug = Boolean.parseBoolean(System.getProperty("debug"));
         boolean ide = Boolean.parseBoolean(System.getProperty("ide"));
         // File home = new File(System.getProperty("user.dir"));
-        File home = new File("/home/simone/NetBeansProjects/OmegaRest/OmegaRest/target/OmegaRest-1.0.0/WEB-INF/"); // FIXME: attenzione risistemare questa parte!
-        System.out.println("IDE Flag: " + ide);
-        System.out.println("I N I T I A L   P R O G R A M   L O A D");
-        System.out.println("---------------------------------------");
-        System.out.println("IPL from: " + home.getAbsolutePath());
+        File home = new File("/home/simone/NetBeansProjects/OmegaTest/target/"); // FIXME: attenzione risistemare questa parte!
+        log.info("IDE Flag: " + ide);
+        log.info("I N I T I A L   P R O G R A M   L O A D");
+        log.info("---------------------------------------");
+        log.info("IPL from: " + home.getAbsolutePath());
 
         if (!ide) {
             List<URL> urls = new ArrayList<>();
@@ -83,35 +88,33 @@ public class OmegaCore {
                 File jars = new File(home, "lib");
                 if (jars.exists()) {
                     for (URL url : allJars(jars)) {
-                        if (debug) {
-                            System.out.println(" - Classpath: " + url);
-                        }
+                        log.info(" - Classpath: " + url);
                         urls.add(url);
                     }
+                } else {
+                    log.info ("no jars in " + jars.getPath());
                 }
             } catch (Throwable e) {
-                e.printStackTrace();
+                log.error("reading jar from lib", e);
             }
             try {
                 File classes = new File(home, "app");
                 if (classes.exists()) {
-                    if (debug) {
-                        System.out.println(" - Classpath: " + classes.toURI().toURL());
-                    }
+                    log.info(" - Classpath: " + classes.toURI().toURL());
                     urls.add(classes.toURI().toURL());
                 }
             } catch (Throwable e) {
-                e.printStackTrace();
+                log.error("reading jar from app ", e);
             }
             loader = new URLClassLoader(urls.toArray(new URL[urls.size()]), loader);
             Thread.currentThread().setContextClassLoader(loader);
         } else {
-            System.out.println("IPL from IDE: not loading any classes or jars!");
+            log.warn("IPL from IDE: not loading any classes or jars!");
         }
 
         try {
-            System.out.println("IPL completed - Loading Sirius as stage2...");
-            System.out.println("");
+            log.info("IPL completed - Loading Sirius as stage2...");
+            log.info("");
             //   System.setProperty("logging", "level = OFF");
 
 //            Class.forName("sirius.kernel.Setup", true, loader)
@@ -119,14 +122,14 @@ public class OmegaCore {
 //                    .invoke(null, loader);
 //            
             Class<?> clazz = Class.forName("sirius.kernel.Setup", true, loader);
-            System.err.println("OmegaCore clazz " + clazz);
+            log.debug("OmegaCore clazz " + clazz);
             Method startEnv = clazz.getMethod("createAndStartEnvironment", ClassLoader.class);
-            System.err.println("OmegaCore startEnv " + startEnv);
+            log.debug("OmegaCore startEnv " + startEnv);
             Object retu = startEnv.invoke(null, loader);
-            System.err.println("OmegaCore startEnv retu " + retu);
+            log.debug("OmegaCore startEnv retu " + retu);
 
 //            Setup.createAndStartEnvironment(loader);
-            System.out.println("Sirius L O A D E D...");
+            log.info("Sirius L O A D E D...");
 
 //            final KernelTest test = new KernelTest();
 //            Thread testThread = new Thread(new Runnable() {
@@ -142,19 +145,21 @@ public class OmegaCore {
             // test();
 //            waitForLethalConnection(port);
 //            System.exit(0);
-        } catch (Throwable e) {
-            e.printStackTrace();
+        } catch (ClassNotFoundException | NoSuchMethodException |
+                SecurityException | IllegalAccessException |
+                IllegalArgumentException | InvocationTargetException e) {
+            log.fatal("on starting...", e);
             System.exit(-1);
         }
     }
 
     public static void stop() {
         try {
-            System.out.println("stopping Sirius");
+            log.info("stopping Sirius");
             Class.forName("sirius.kernel.Sirius", true, loader).getMethod("stop").invoke(null);
-            System.out.println("stopped Sirius");
+            log.info("stopped Sirius");
         } catch (Exception ex) {
-            ex.printStackTrace();
+            log.error("on stopping...", ex);
         }
     }
 
@@ -163,21 +168,21 @@ public class OmegaCore {
      */
     private static void waitForLethalConnection(int port) {
         try {
-            System.out.printf("Opening port %d as shutdown listener%n", port);
+            log.info(String.format("Opening port %d as shutdown listener%n", port));
             ServerSocket socket = new ServerSocket(port);
             try {
                 Socket client = socket.accept();
-                System.out.println("C L O S I N G   M I C R O K E R N E L");
-                System.out.println("---------------------------------------");
+                log.info("C L O S I N G   M I C R O K E R N E L");
+                log.info("---------------------------------------");
                 Class.forName("sirius.kernel.Sirius", true, loader).getMethod("stop").invoke(null);
                 client.close();
             } finally {
                 socket.close();
-                System.out.println("M I C R O K E R N E L  C L O S E D");
-                System.out.println("---------------------------------------");
+                log.info("M I C R O K E R N E L  C L O S E D");
+                log.info("---------------------------------------");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("on wait for lethal connection...", e);
         }
     }
 
