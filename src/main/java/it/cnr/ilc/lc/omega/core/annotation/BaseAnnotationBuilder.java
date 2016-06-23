@@ -31,6 +31,7 @@ public class BaseAnnotationBuilder extends AbstractAnnotationBuilder<BaseAnnotat
 
     public BaseAnnotationType build(BaseAnnotationType extension) {
         extension.setText(this.text);
+        extension.setIndexField(text);
         return extension;
     }
 

@@ -43,8 +43,7 @@ public class BaseAnnotationText {
 
     private void init(String text, URI uri) throws ManagerAction.ActionException {
         log.info("BaseAnnotationText init() resourceManager=(" + resourceManager + ")");
-        BaseAnnotationBuilder bab = new BaseAnnotationBuilder().text(text);
-        bab.setURI(uri);
+        BaseAnnotationBuilder bab = new BaseAnnotationBuilder().URI(uri).text(text);
         annotation = resourceManager.createAnnotation(
                 BaseAnnotationType.class, bab);
     }

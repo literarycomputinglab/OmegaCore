@@ -11,19 +11,20 @@ import it.cnr.ilc.lc.omega.entity.SuperNode;
 import it.cnr.ilc.lc.omega.entity.TextContent;
 import it.cnr.ilc.lc.omega.entity.TextLocus;
 import it.cnr.ilc.lc.omega.exception.InvalidURIException;
+import it.cnr.ilc.lc.omega.persistence.PersistenceHandler;
 import java.io.BufferedInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLConnection;
 import java.util.Scanner;
-import java.util.logging.Level;
 import java.util.regex.Pattern;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
+import javax.persistence.EntityExistsException;
+import javax.persistence.TransactionRequiredException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hibernate.cfg.NotYetImplementedException;
+import sirius.kernel.di.std.Part;
 import sirius.kernel.di.std.Register;
 
 /**
@@ -36,6 +37,9 @@ public class ResourceManagerText implements ResourceManagerSPI {
     private static Logger log = LogManager.getLogger(ManagerAction.class);
 
     private final MimeType mimeType;
+
+    @Part
+    private static PersistenceHandler persitence;
 
     public ResourceManagerText() throws MimeTypeParseException {
         this.mimeType = new MimeType("text/plain");
@@ -107,19 +111,17 @@ public class ResourceManagerText implements ResourceManagerSPI {
             //controllare che la risorsa non sia già presente con lo stesso URI
             URLConnection site = uri.toURL().openConnection(); //PER CARICARE RISORSA REMOTA
             content.setText(new Scanner(new BufferedInputStream(site.getInputStream()), "UTF-8").useDelimiter(Pattern.compile("\\A")).next());
-            
+
         } catch (IOException e) {
             log.error("Opening connection", e);
-        }catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException ex) {
             //Logger.getLogger(ResourceManagerText.class.getName()).log(Level.WARNING, "Invalid URI: " + uri.toASCIIString(), new IllegalArgumentException("Invalid URI: " + uri.toASCIIString()));
-            log.warn("Invalid URI " + uri.toASCIIString(),ex);
+            log.warn("Invalid URI " + uri.toASCIIString() + ", " + ex.getLocalizedMessage());
             //LA RISORSA NON E' REMOTA
             content.setText("");
-        } 
-            return content;
         }
-
-    
+        return content;
+    }
 
     private void updateContent(URI sourceUri, URI targetUri) {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
@@ -166,7 +168,13 @@ public class ResourceManagerText implements ResourceManagerSPI {
 
 //        Session session = Neo4jSessionFactory.getNeo4jSession();
 //        session.save(resource);
-        throw new UnsupportedOperationException("to be implemented");
+        log.info("persist resource, is the persistence active? " + persitence.getEntityManager().getTransaction().isActive());
+        try {
+            persitence.getEntityManager().persist(resource);
+        } catch (EntityExistsException | TransactionRequiredException e) {
+            log.error("in persist resource " + e);
+        }
+        // throw new UnsupportedOperationException("to be implemented");
 
     }
 

@@ -6,20 +6,28 @@
 package it.cnr.ilc.lc.omega.core.annotation;
 
 import it.cnr.ilc.lc.omega.entity.Annotation;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Indexed;
 
 /**
  *
  * @author angelo
  */
+@Entity
+@Indexed
 public class BaseAnnotationType extends Annotation.Data {
 
+    @Field
+    @Column(length = 4096)
     private String text;
     
     public String getText() {
         return text;
     }
 
-    public void setText(String text) {
+    void setText(String text) {
         this.text = text;
     }
 
@@ -31,7 +39,6 @@ public class BaseAnnotationType extends Annotation.Data {
 
     @Override
     public <E extends Annotation.Data> E get() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return (E) this;
     }
-
 }
