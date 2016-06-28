@@ -25,18 +25,20 @@ public abstract class ManagerAction {
             entityManager = persistence.getEntityManager();
             entityManager.getTransaction().begin();
             log.info("Transaction is in progress? " + entityManager.getTransaction().isActive());
+            log.info("ENTITY MANAGER " + entityManager);
             ret = action();
-            log.debug("after action()");
+            log.info("after action(), Transaction is in progress? " + entityManager.getTransaction().isActive());
             //System.err.println(session.getTransaction().toString());
             entityManager.getTransaction().commit();
 
-            log.debug("after commit transaction");
+            log.info("after commit transaction");
         } catch (Exception e) {
             log.error("In transaction ", e);
             throw new ActionException(e);
         } finally {
             try {
                 entityManager.close();
+                log.info("manager is now closed");
             } catch (Exception ee) {
                 log.error("Closing entityManager ", ee);
             }

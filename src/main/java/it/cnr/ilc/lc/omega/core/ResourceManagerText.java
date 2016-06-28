@@ -170,7 +170,9 @@ public class ResourceManagerText implements ResourceManagerSPI {
 //        session.save(resource);
         log.info("persist resource, is the persistence active? " + persitence.getEntityManager().getTransaction().isActive());
         try {
+
             persitence.getEntityManager().persist(resource);
+            log.debug("resource persisted");
         } catch (EntityExistsException | TransactionRequiredException e) {
             log.error("in persist resource " + e);
         }
