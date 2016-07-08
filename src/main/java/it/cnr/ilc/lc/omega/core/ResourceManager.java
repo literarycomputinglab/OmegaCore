@@ -183,7 +183,7 @@ public final class ResourceManager {
             @Override
             protected Source<T> action() throws ManagerAction.ActionException {
                 for (ResourceManagerSPI manager : managers) {
-                    return manager.load(uri);
+                    return manager.load(uri, Source.class );
                 }
                 log.error("Unable to load resource at uri " + uri);
                 throw new ActionException(new Exception("Unable to load resource at uri " + uri));

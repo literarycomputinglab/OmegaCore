@@ -47,6 +47,6 @@ public interface ResourceManagerSPI {
     /* DATABASE */
     public <T extends SuperNode> void save(T resource);
 
-    public <T extends SuperNode> T load(URI uri);
+    public <T extends SuperNode> T load(URI uri, Class<T> clazz);
 
 }

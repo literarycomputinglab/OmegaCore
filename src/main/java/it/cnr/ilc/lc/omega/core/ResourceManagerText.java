@@ -21,7 +21,14 @@ import java.util.regex.Pattern;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
 import javax.persistence.EntityExistsException;
+import javax.persistence.EntityManager;
 import javax.persistence.TransactionRequiredException;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
+import javax.persistence.metamodel.EntityType;
+import javax.persistence.metamodel.Metamodel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import sirius.kernel.di.std.Part;
@@ -39,7 +46,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
     private final MimeType mimeType;
 
     @Part
-    private static PersistenceHandler persitence;
+    private static PersistenceHandler persistence;
 
     public ResourceManagerText() throws MimeTypeParseException {
         this.mimeType = new MimeType("text/plain");
@@ -168,10 +175,10 @@ public class ResourceManagerText implements ResourceManagerSPI {
 
 //        Session session = Neo4jSessionFactory.getNeo4jSession();
 //        session.save(resource);
-        log.info("persist resource, is the persistence active? " + persitence.getEntityManager().getTransaction().isActive());
+        log.info("persist resource, is the transaction active? " + persistence.getEntityManager().getTransaction().isActive());
         try {
 
-            persitence.getEntityManager().persist(resource);
+            persistence.getEntityManager().persist(resource);
             log.debug("resource persisted");
         } catch (EntityExistsException | TransactionRequiredException e) {
             log.error("in persist resource " + e);
@@ -189,12 +196,24 @@ public class ResourceManagerText implements ResourceManagerSPI {
     }
 
     @Override
-    public <T extends SuperNode> T load(URI uri) {
+    public <T extends SuperNode> T load(URI uri, Class<T> clazz) {
 //        Session session = Neo4jSessionFactory.getNeo4jSession();
 //        Source<TextContent> source = session.loadAll(Source.class, new Filter("uri", uri.toASCIIString())).iterator().next();
 //
 //        return (T) source;
-        throw new UnsupportedOperationException("to be implemented");
+        EntityManager em = persistence.getEntityManager();
+        log.info("load resource, is the transaction active? " + em.getTransaction().isActive());
+
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<T> cq = cb.createQuery(clazz);
+        Root<T> root = cq.from(clazz);
+        cq.where(cb.equal(root.get("uri"), uri.toASCIIString()));
+
+        TypedQuery<T> q = em.createQuery(cq);
+        T result = q.getSingleResult();
+
+        //System.err.println("result " + result);
+        return result;
     }
 
     @Override
