@@ -83,6 +83,7 @@ public final class ResourceManager {
 
                     }
                 }
+                log.warn("Unable to create Source!");
                 return null;
             }
         }.doAction();
