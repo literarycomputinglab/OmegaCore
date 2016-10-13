@@ -16,19 +16,19 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLConnection;
+import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.persistence.TransactionRequiredException;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
-import javax.persistence.metamodel.EntityType;
-import javax.persistence.metamodel.Metamodel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import sirius.kernel.di.std.Part;
@@ -215,6 +215,17 @@ public class ResourceManagerText implements ResourceManagerSPI {
         //System.err.println("result " + result);
         return result;
     }
+
+    @Override
+    public <T extends SuperNode> List<T> loadAll(Class<T> clazz) {
+       EntityManager em = persistence.getEntityManager();
+        log.info("load resource, is the transaction active? " + em.getTransaction().isActive());
+
+        Query q =  em.createQuery("Select s From Source s;");
+        //System.err.println("result " + result);
+        List<Source<TextContent>> los =  q.getResultList();
+        return (List<T>) los;
+     }
 
     @Override
     public void update(ResourceManager.UpdateAction updateAction, URI resourceUri, ResourceStatus status) {

@@ -1,9 +1,9 @@
 package it.cnr.ilc.lc.omega.core;
 
+import it.cnr.ilc.lc.omega.persistence.PersistenceHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import sirius.kernel.di.std.Part;
-import it.cnr.ilc.lc.omega.persistence.PersistenceHandler;
 import javax.persistence.EntityManager;
 
 /**

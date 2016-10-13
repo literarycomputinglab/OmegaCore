@@ -11,6 +11,7 @@ import it.cnr.ilc.lc.omega.entity.TextLocus;
 import it.cnr.ilc.lc.omega.exception.InvalidURIException;
 import java.net.URI;
 import java.util.Collection;
+import java.util.List;
 import javax.activation.MimeType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -184,10 +185,28 @@ public final class ResourceManager {
             @Override
             protected Source<T> action() throws ManagerAction.ActionException {
                 for (ResourceManagerSPI manager : managers) {
-                    return manager.load(uri, Source.class );
+                    return manager.load(uri, Source.class);
                 }
                 log.error("Unable to load resource at uri " + uri);
                 throw new ActionException(new Exception("Unable to load resource at uri " + uri));
+            }
+
+        }.doAction();
+
+    }
+
+    public <T extends Content> List<Source<T>> loadAllSources(Class<T> clazz) throws ManagerAction.ActionException {
+
+        return new ManagerAction() {
+
+            @Override
+            protected List<Source> action() throws ManagerAction.ActionException {
+                for (ResourceManagerSPI manager : managers) {
+                    List<Source> los = manager.loadAll(Source.class);
+                    return los;
+                }
+                log.error("Unable to load all resources");
+                throw new ManagerAction.ActionException(new Exception("Unable to load all resources"));
             }
 
         }.doAction();
@@ -227,11 +246,11 @@ public final class ResourceManager {
 
                         locus = manager.update(UpdateAction.LOCUS, locus,
                                 new ResourceStatus<>() // controllare i tipi generici
-                                .clazz(locus.getClass())
-                                .source(source)
-                                .start(start)
-                                .end(end)
-                                .annotation(annotation)
+                                        .clazz(locus.getClass())
+                                        .source(source)
+                                        .start(start)
+                                        .end(end)
+                                        .annotation(annotation)
                         );
                         log.info("+++ uri " + locus.getUri());
                         manager.update(UpdateAction.ANNOTATION,
@@ -286,7 +305,7 @@ public final class ResourceManager {
                         annotation = manager.create(clazz.getSimpleName(), builder);
                     } catch (InvalidURIException ex) {
                         log.error("creating annotation for clazz " + clazz.getSimpleName(), ex);
-                            throw new ActionException(ex);
+                        throw new ActionException(ex);
                     }
                     log.info("createAnnotation() end");
 ///////////////METTERE LA URI !!!!!!!!!!!!!
@@ -317,10 +336,10 @@ public final class ResourceManager {
                                     URI.create("/resourcemanager/createLocus/action/locus/" + System.currentTimeMillis())); //FIXME: da metteer in Utils la creazione delle uri
                             manager.update(UpdateAction.LOCUS, locus,
                                     new ResourceStatus<T, Annotation.Data, V>()
-                                    .start(start)
-                                    .end(end)
-                                    .source(source)
-                                    .pointsTo(Locus.PointsTo.CONTENT));
+                                            .start(start)
+                                            .end(end)
+                                            .source(source)
+                                            .pointsTo(Locus.PointsTo.CONTENT));
                             return locus;
                         } catch (InvalidURIException ex) {
                             log.error("creating a URI ", ex);

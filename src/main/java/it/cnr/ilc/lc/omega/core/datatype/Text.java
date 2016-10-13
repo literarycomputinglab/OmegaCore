@@ -5,7 +5,6 @@
  */
 package it.cnr.ilc.lc.omega.core.datatype;
 
-import com.sun.javafx.scene.text.HitInfo;
 import it.cnr.ilc.lc.omega.core.ManagerAction;
 import it.cnr.ilc.lc.omega.core.ResourceManager;
 import it.cnr.ilc.lc.omega.core.SearchManager;
@@ -83,12 +82,22 @@ public class Text {
         return array;
     }
 
+    public static List<Text> loadAll() throws ManagerAction.ActionException {
+
+        List<Text> array = new ArrayList<>();
+        List<Source<TextContent>> lostc = resourceManager.loadAllSources(TextContent.class);
+        for (Source<TextContent> source : lostc) {
+            array.add(new Text(source));
+        }
+        return array;
+    }
+
     public List<TextualHit> search(String query) {
 
         List<TextualHit> ret = new ArrayList<>();
         Pattern p = Pattern.compile(query);
         Matcher m = p.matcher(getTextContent());
-        
+
         while (m.find()) {
             ret.add(new TextualHit(m.start(), m.end()));
         }

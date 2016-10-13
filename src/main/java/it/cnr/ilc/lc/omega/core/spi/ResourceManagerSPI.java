@@ -8,6 +8,7 @@ import it.cnr.ilc.lc.omega.entity.Content;
 import it.cnr.ilc.lc.omega.entity.SuperNode;
 import it.cnr.ilc.lc.omega.exception.InvalidURIException;
 import java.net.URI;
+import java.util.List;
 import javax.activation.MimeType;
 
 /**
@@ -48,5 +49,7 @@ public interface ResourceManagerSPI {
     public <T extends SuperNode> void save(T resource);
 
     public <T extends SuperNode> T load(URI uri, Class<T> clazz);
+
+    public <T extends SuperNode> List<T> loadAll(Class<T> clazz);
 
 }
