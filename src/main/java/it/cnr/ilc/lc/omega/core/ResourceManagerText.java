@@ -221,7 +221,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
        EntityManager em = persistence.getEntityManager();
         log.info("load resource, is the transaction active? " + em.getTransaction().isActive());
 
-        Query q =  em.createQuery("Select s From Source s;");
+        Query q =  em.createQuery("Select s From Source s");
         //System.err.println("result " + result);
         List<Source<TextContent>> los =  q.getResultList();
         return (List<T>) los;

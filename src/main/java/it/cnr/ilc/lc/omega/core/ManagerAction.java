@@ -37,7 +37,11 @@ public abstract class ManagerAction {
             throw new ActionException(e);
         } finally {
             try {
-                entityManager.close();
+                if (null != entityManager) {
+                    entityManager.close();
+                } else {
+                    log.warn("entity manager is null!");
+                }
                 log.info("manager is now closed");
             } catch (Exception ee) {
                 log.error("Closing entityManager ", ee);
