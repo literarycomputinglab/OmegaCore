@@ -86,6 +86,8 @@ public class Text {
 
         List<Text> array = new ArrayList<>();
         List<Source<TextContent>> lostc = resourceManager.loadAllSources(TextContent.class);
+        log.warn("array lenght " + lostc.size());
+
         for (Source<TextContent> source : lostc) {
             array.add(new Text(source));
         }

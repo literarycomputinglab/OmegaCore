@@ -213,19 +213,38 @@ public class ResourceManagerText implements ResourceManagerSPI {
         T result = q.getSingleResult();
 
         //System.err.println("result " + result);
+//        loadAll(Source.sourceOf(TextContent.class, URI.create("")).getClass());
         return result;
     }
 
     @Override
     public <T extends SuperNode> List<T> loadAll(Class<T> clazz) {
-       EntityManager em = persistence.getEntityManager();
-        log.info("load resource, is the transaction active? " + em.getTransaction().isActive());
 
-        Query q =  em.createQuery("Select s From Source s");
+        log.info("Loading all, clazz is " + clazz);
+        if (!clazz.isInstance(Source.sourceOf(TextContent.class, URI.create("dummyURI")))) {
+            throw new IllegalArgumentException("Aspected TextContent as resource type");
+        }
+
+        return (List<T>) loadAllTextContent((Source.sourceOf(TextContent.class, URI.create("dummyURI"))).getClass());
+    }
+
+    private <T extends Source<TextContent>> List<T> loadAllTextContent(Class<T> clazz) {
+        EntityManager em = persistence.getEntityManager();
+        log.info("Creating local criteria query for load all text content ");
+
+        //Query q =  em.createQuery("Select s From Source s");
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+
+        CriteriaQuery<T> cq = cb.createQuery(clazz);
+        Root<T> c = cq.from(clazz);
+        cq.select(c);
+        TypedQuery<T> q = em.createQuery(cq);
+
         //System.err.println("result " + result);
-        List<Source<TextContent>> los =  q.getResultList();
+        List<T> los = q.getResultList();
+        log.warn("resultset lenght " + los.size());
         return (List<T>) los;
-     }
+    }
 
     @Override
     public void update(ResourceManager.UpdateAction updateAction, URI resourceUri, ResourceStatus status) {
