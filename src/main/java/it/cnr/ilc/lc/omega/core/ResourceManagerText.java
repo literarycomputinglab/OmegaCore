@@ -1,5 +1,8 @@
 package it.cnr.ilc.lc.omega.core;
 
+import it.cnr.ilc.lc.omega.annotation.DummyAnnotation;
+import it.cnr.ilc.lc.omega.annotation.DummyAnnotationBuilder;
+import it.cnr.ilc.lc.omega.annotation.structural.WorkAnnotation;
 import it.cnr.ilc.lc.omega.core.spi.ResourceManagerSPI;
 import it.cnr.ilc.lc.omega.core.util.Utils;
 import it.cnr.ilc.lc.omega.entity.Annotation;
@@ -18,6 +21,7 @@ import java.net.URI;
 import java.net.URLConnection;
 import java.util.List;
 import java.util.Scanner;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
@@ -28,7 +32,12 @@ import javax.persistence.TransactionRequiredException;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.FetchParent;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Subquery;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import sirius.kernel.di.std.Part;
@@ -220,15 +229,28 @@ public class ResourceManagerText implements ResourceManagerSPI {
     @Override
     public <T extends SuperNode> List<T> loadAll(Class<T> clazz) {
 
+        List<T> ret = null;
         log.info("Loading all, clazz is " + clazz);
-        if (!clazz.isInstance(Source.sourceOf(TextContent.class, URI.create("dummyURI")))) {
-            throw new IllegalArgumentException("Aspected TextContent as resource type");
+        if (clazz.isInstance(Source.sourceOf(TextContent.class, URI.create("dummyURI")))) {
+            ret = (List<T>) loadAllTextResource((Source.sourceOf(TextContent.class, URI.create("dummyURI"))).getClass());
+        } else {
+            try {
+                Annotation.register("dummy", DummyAnnotation.class);
+
+                if (clazz.isInstance(Annotation.newAnnotation("dummy", new DummyAnnotationBuilder().URI(URI.create("/dummyUri/"))))) {
+                    ret = (List<T>) loadAllTextResource(Annotation.newAnnotation("dummy", new DummyAnnotationBuilder().URI(URI.create("/dummyUri/"))).getClass());
+                } else {
+                    throw new IllegalArgumentException("Aspected TextContent as resource type");
+                }
+            } catch (InvalidURIException ex) {
+                java.util.logging.Logger.getLogger(ResourceManagerText.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
 
-        return (List<T>) loadAllTextContent((Source.sourceOf(TextContent.class, URI.create("dummyURI"))).getClass());
+        return ret;
     }
 
-    private <T extends Source<TextContent>> List<T> loadAllTextContent(Class<T> clazz) {
+    private <T> List<T> loadAllTextResource(Class<T> clazz) {
         EntityManager em = persistence.getEntityManager();
         log.info("Creating local criteria query for load all text content ");
 
@@ -236,11 +258,31 @@ public class ResourceManagerText implements ResourceManagerSPI {
         CriteriaBuilder cb = em.getCriteriaBuilder();
 
         CriteriaQuery<T> cq = cb.createQuery(clazz);
-        Root<T> c = cq.from(clazz);
-        cq.select(c);
-        TypedQuery<T> q = em.createQuery(cq);
 
-        //System.err.println("result " + result);
+        Root<T> c = cq.from(clazz);
+
+        //Subquery<Annotation> subq = cq.subquery(Annotation.class);
+        //Root<Annotation> annotationRoot = subq.from(Annotation.class);
+//        Path<Annotation.Data> pathData = annotationRoot.join("data", JoinType.LEFT);
+//        log.info("URI " + pathData.get("uri"));
+//        Predicate correlatedSubqJoin = cb.equal(c, annotationRoot);
+        //subq.select(annotationRoot).where(correlatedSubqJoin);
+        //subq.select(annotationRoot);
+        //annotationRoot.fetch("data", JoinType.LEFT);
+        /* CriteriaQuery<Annotation> cqAnn = cb.createQuery(Annotation.class);
+        Root<Annotation> rootAnn = cqAnn.from(Annotation.class);
+        rootAnn.fetch("data", JoinType.LEFT);
+
+        cqAnn.select(rootAnn);
+        TypedQuery<Annotation> qAnn = em.createQuery(cqAnn);
+        List<Annotation> los = qAnn.getResultList();
+        log.warn("resultset lenght " + los.size());
+        log.warn("Authors(0) " + ((WorkAnnotation)los.get(0).getData()).getAuthors());
+        return null; */
+        cq.select(c);//.where(cb.exists(subq));
+        TypedQuery<T> q = em.createQuery(cq);
+//
+//        //System.err.println("result " + result);
         List<T> los = q.getResultList();
         log.warn("resultset lenght " + los.size());
         return (List<T>) los;

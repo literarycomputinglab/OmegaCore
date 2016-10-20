@@ -8,6 +8,7 @@ package it.cnr.ilc.lc.omega.core.datatype;
 import it.cnr.ilc.lc.omega.core.ManagerAction;
 import it.cnr.ilc.lc.omega.core.ResourceManager;
 import it.cnr.ilc.lc.omega.core.SearchManager;
+import it.cnr.ilc.lc.omega.entity.Annotation;
 import it.cnr.ilc.lc.omega.entity.Source;
 import it.cnr.ilc.lc.omega.entity.TextContent;
 import it.cnr.ilc.lc.omega.exception.InvalidURIException;
@@ -86,12 +87,20 @@ public class Text {
 
         List<Text> array = new ArrayList<>();
         List<Source<TextContent>> lostc = resourceManager.loadAllSources(TextContent.class);
-        log.warn("array lenght " + lostc.size());
+        log.info("loadAll() result lenght " + lostc.size());
 
         for (Source<TextContent> source : lostc) {
             array.add(new Text(source));
         }
         return array;
+    }
+
+    public static List<Annotation<TextContent,?>> loadAllAnnotations() throws ManagerAction.ActionException {
+
+        List<Annotation<TextContent,?>> lostc = resourceManager.loadAllAnnotation(TextContent.class);
+        log.info("LoadAllAnnotation() result lenght " + lostc.size());
+
+        return lostc;
     }
 
     public List<TextualHit> search(String query) {

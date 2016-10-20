@@ -212,6 +212,24 @@ public final class ResourceManager {
         }.doAction();
 
     }
+    
+        public <T extends Content> List<Annotation<T,?>> loadAllAnnotation(Class<T> clazz) throws ManagerAction.ActionException {
+
+        return new ManagerAction() {
+
+            @Override
+            protected List<Annotation> action() throws ManagerAction.ActionException {
+                for (ResourceManagerSPI manager : managers) {
+                    List<Annotation> los = manager.loadAll(Annotation.class);
+                    return los;
+                }
+                log.error("Unable to load all annotations");
+                throw new ManagerAction.ActionException(new Exception("Unable to load all annotations"));
+            }
+
+        }.doAction();
+
+    }
 
     //FIXME: Da generalizzare?
     /*public <T extends Content, E extends Annotation.Data> void

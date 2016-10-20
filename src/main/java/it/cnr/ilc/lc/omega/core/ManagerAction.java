@@ -32,7 +32,7 @@ public abstract class ManagerAction {
             entityManager.getTransaction().commit();
 
             log.info("after commit transaction");
-        } catch (Exception e) {
+        } catch (ActionException e) {
             log.error("In transaction ", e);
             throw new ActionException(e);
         } finally {
