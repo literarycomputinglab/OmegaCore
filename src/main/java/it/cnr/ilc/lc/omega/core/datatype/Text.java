@@ -95,12 +95,20 @@ public class Text {
         return array;
     }
 
-    public static List<Annotation<TextContent,?>> loadAllAnnotations() throws ManagerAction.ActionException {
+    public static List<Annotation<TextContent, ?>> loadAllAnnotations() throws ManagerAction.ActionException {
 
-        List<Annotation<TextContent,?>> lostc = resourceManager.loadAllAnnotation(TextContent.class);
-        log.info("LoadAllAnnotation() result lenght " + lostc.size());
+        List<Annotation<TextContent, ?>> lostc = resourceManager.loadAllAnnotation(TextContent.class);
+        log.info("oadAllAnnotation() result lenght " + lostc.size());
 
         return lostc;
+    }
+
+    public static Annotation<TextContent, ?> loadAnnotation(URI uri) throws ManagerAction.ActionException {
+
+        Annotation<TextContent, ?> ann = resourceManager.loadAnnotation(uri, TextContent.class);
+        log.info("loadAnnotation() ann is [" + ann + "]");
+        log.info ("loci " + ann.getLociIterator(TextContent.class).next());
+        return ann;
     }
 
     public List<TextualHit> search(String query) {

@@ -187,8 +187,8 @@ public final class ResourceManager {
                 for (ResourceManagerSPI manager : managers) {
                     return manager.load(uri, Source.class);
                 }
-                log.error("Unable to load resource at uri " + uri);
-                throw new ActionException(new Exception("Unable to load resource at uri " + uri));
+                log.error("loadSource(): Unable to load resource at uri " + uri);
+                throw new ActionException(new Exception("loadSource(): Unable to load resource at uri " + uri));
             }
 
         }.doAction();
@@ -205,15 +205,15 @@ public final class ResourceManager {
                     List<Source> los = manager.loadAll(Source.class);
                     return los;
                 }
-                log.error("Unable to load all resources");
-                throw new ManagerAction.ActionException(new Exception("Unable to load all resources"));
+                log.error("loadAllSources(): Unable to load all resources");
+                throw new ManagerAction.ActionException(new Exception("loadAllSources(): Unable to load all resources"));
             }
 
         }.doAction();
 
     }
-    
-        public <T extends Content> List<Annotation<T,?>> loadAllAnnotation(Class<T> clazz) throws ManagerAction.ActionException {
+
+    public <T extends Content> List<Annotation<T, ?>> loadAllAnnotation(Class<T> clazz) throws ManagerAction.ActionException {
 
         return new ManagerAction() {
 
@@ -223,8 +223,25 @@ public final class ResourceManager {
                     List<Annotation> los = manager.loadAll(Annotation.class);
                     return los;
                 }
-                log.error("Unable to load all annotations");
-                throw new ManagerAction.ActionException(new Exception("Unable to load all annotations"));
+                log.error("loadAllAnnotation(): Unable to load all annotations");
+                throw new ManagerAction.ActionException(new Exception("loadAllAnnotation(): Unable to load all annotations"));
+            }
+
+        }.doAction();
+
+    }
+
+    public <T extends Content> Annotation<T,?> loadAnnotation(final URI uri, Class<T> clazz) throws ManagerAction.ActionException {
+
+        return new ManagerAction() {
+
+            @Override
+            protected Source<T> action() throws ManagerAction.ActionException {
+                for (ResourceManagerSPI manager : managers) {
+                    return manager.load(uri, Annotation.class);
+                }
+                log.error("loadAnnotation(): Unable to load resource at uri " + uri);
+                throw new ManagerAction.ActionException(new Exception("loadAnnotation(): Unable to load resource at uri " + uri));
             }
 
         }.doAction();
