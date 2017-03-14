@@ -50,7 +50,7 @@ import sirius.kernel.di.std.Register;
 @Register(classes = ResourceManagerSPI.class, name = "text")
 public class ResourceManagerText implements ResourceManagerSPI {
 
-    private static Logger log = LogManager.getLogger(ManagerAction.class);
+    private static Logger log = LogManager.getLogger(ResourceManagerText.class);
 
     private final MimeType mimeType;
 
