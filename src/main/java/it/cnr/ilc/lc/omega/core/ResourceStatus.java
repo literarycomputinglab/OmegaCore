@@ -5,6 +5,7 @@
  */
 package it.cnr.ilc.lc.omega.core;
 
+import it.cnr.ilc.lc.omega.core.datatype.ADTAnnotation;
 import it.cnr.ilc.lc.omega.entity.Annotation;
 import it.cnr.ilc.lc.omega.entity.Content;
 import it.cnr.ilc.lc.omega.entity.Locus;
@@ -30,6 +31,8 @@ public class ResourceStatus<T extends Content, E extends Annotation.Data, V exte
     private Optional<String> text = Optional.empty();
     private Optional<Locus.PointsTo> pointsTo = Optional.empty();
     private Optional<Locus<TextContent>> textLocus = Optional.empty();
+    private Optional<ADTAnnotation> sourceAnnotation = Optional.empty();
+    private Optional<ADTAnnotation> targetAnnotation = Optional.empty();
 
     public Optional<Locus<TextContent>> getTextLocus() {
         return textLocus;
@@ -105,6 +108,24 @@ public class ResourceStatus<T extends Content, E extends Annotation.Data, V exte
     public ResourceStatus pointsTo(Locus.PointsTo pointsTo) {
         this.pointsTo = Optional.ofNullable(pointsTo);
         return this;
+    }
+
+    public ResourceStatus sourceAnnotation(ADTAnnotation annotation) {
+        this.sourceAnnotation = Optional.ofNullable(annotation);
+        return this;
+    }
+
+    public Optional<ADTAnnotation> getSourceAnnotation() {
+        return sourceAnnotation;
+    }
+
+    public ResourceStatus targetAnnotation(ADTAnnotation annotation) {
+        this.targetAnnotation = Optional.ofNullable(annotation);
+        return this;
+    }
+
+    public Optional<ADTAnnotation> getTargetAnnotation() {
+        return targetAnnotation;
     }
 
 }

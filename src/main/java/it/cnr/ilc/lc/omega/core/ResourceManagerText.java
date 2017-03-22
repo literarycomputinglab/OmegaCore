@@ -3,10 +3,12 @@ package it.cnr.ilc.lc.omega.core;
 import it.cnr.ilc.lc.omega.annotation.DummyAnnotation;
 import it.cnr.ilc.lc.omega.annotation.DummyAnnotationBuilder;
 import it.cnr.ilc.lc.omega.annotation.structural.WorkAnnotation;
+import it.cnr.ilc.lc.omega.core.datatype.ADTAnnotation;
 import it.cnr.ilc.lc.omega.core.spi.ResourceManagerSPI;
 import it.cnr.ilc.lc.omega.core.util.Utils;
 import it.cnr.ilc.lc.omega.entity.Annotation;
 import it.cnr.ilc.lc.omega.entity.AnnotationBuilder;
+import it.cnr.ilc.lc.omega.entity.AnnotationRelation;
 import it.cnr.ilc.lc.omega.entity.Content;
 import it.cnr.ilc.lc.omega.entity.Locus;
 import it.cnr.ilc.lc.omega.entity.Source;
@@ -20,6 +22,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URLConnection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
@@ -302,6 +305,8 @@ public class ResourceManagerText implements ResourceManagerSPI {
                 return (T) updateTextLocus((TextLocus) resource, status); // controllare i cast per i tipi parmetrici
             case CONTENT:
                 return (T) updateTextContent((TextContent) resource, status);
+            case ANNOTATION_RELATION:
+                return (T) updateAnnotationRelation((AnnotationRelation) resource, status);
             default:
                 throw new UnsupportedOperationException(updateAction.name() + " unsupported");
         }
@@ -340,6 +345,17 @@ public class ResourceManagerText implements ResourceManagerSPI {
 
         content.setText(status.getText().get());
         return content;
+    }
+
+    private AnnotationRelation updateAnnotationRelation(AnnotationRelation relation, ResourceStatus status) {
+
+        Optional<ADTAnnotation> source = status.getSourceAnnotation();
+        source.get().registerAsSource(relation);
+        
+        Optional<ADTAnnotation> target = status.getTargetAnnotation();
+        target.get().registerAsTarget(relation);
+        
+        return relation;
     }
 
 }

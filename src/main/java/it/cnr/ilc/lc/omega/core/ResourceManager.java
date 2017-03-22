@@ -1,10 +1,14 @@
 package it.cnr.ilc.lc.omega.core;
 
+import it.cnr.ilc.lc.omega.core.annotation.AnnotationRelationType;
+import it.cnr.ilc.lc.omega.core.datatype.ADTAbstractAnnotation;
+import it.cnr.ilc.lc.omega.core.datatype.ADTAnnotation;
 import it.cnr.ilc.lc.omega.core.spi.ResourceManagerSPI;
 import it.cnr.ilc.lc.omega.entity.Annotation;
 import it.cnr.ilc.lc.omega.entity.AnnotationBuilder;
 import it.cnr.ilc.lc.omega.entity.Content;
 import it.cnr.ilc.lc.omega.entity.Locus;
+import it.cnr.ilc.lc.omega.entity.AnnotationRelation;
 import it.cnr.ilc.lc.omega.entity.Source;
 import it.cnr.ilc.lc.omega.entity.TextContent;
 import it.cnr.ilc.lc.omega.entity.TextLocus;
@@ -29,12 +33,12 @@ public final class ResourceManager {
 
     public enum CreateAction {
 
-        SOURCE, CONTENT, FOLDER, ANNOTATION, LOCUS
+        SOURCE, CONTENT, FOLDER, ANNOTATION, LOCUS, ANNOTATION_RELATION
     }
 
     public enum UpdateAction {
 
-        SOURCE, CONTENT, FOLDER, ANNOTATION, LOCUS
+        SOURCE, CONTENT, FOLDER, ANNOTATION, LOCUS, ANNOTATION_RELATION
     }
 
     public enum OmegaMimeType {
@@ -231,7 +235,7 @@ public final class ResourceManager {
 
     }
 
-    public <T extends Content> Annotation<T,?> loadAnnotation(final URI uri, Class<T> clazz) throws ManagerAction.ActionException {
+    public <T extends Content> Annotation<T, ?> loadAnnotation(final URI uri, Class<T> clazz) throws ManagerAction.ActionException {
 
         return new ManagerAction() {
 
@@ -424,6 +428,24 @@ public final class ResourceManager {
                 throw new ManagerAction.ActionException(new Exception("No suitable manager for Locus<TextContent>"));
             }
 
+        }.doAction();
+    }
+
+    public void updateAnnotationRelation(ADTAnnotation source, ADTAnnotation target, AnnotationRelationType type) throws ManagerAction.ActionException {
+        new ManagerAction() {
+
+            @Override
+            protected Boolean action() throws ManagerAction.ActionException {
+                for (ResourceManagerSPI manager : managers) {
+                    if (manager.getMimeType().getBaseType().equals(OmegaMimeType.PLAIN.toString())) {
+                        manager.update(UpdateAction.ANNOTATION_RELATION, AnnotationRelation.newInstance(type),
+                                new ResourceStatus().sourceAnnotation(source).targetAnnotation(target));
+                        return true;
+                    }
+                }
+                log.error("No suitable manager for updateAnnotationRelation");
+                throw new ManagerAction.ActionException(new Exception("No suitable manager for updateAnnotationRelation"));
+            }
         }.doAction();
     }
 
