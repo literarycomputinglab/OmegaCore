@@ -13,6 +13,6 @@ import it.cnr.ilc.lc.omega.entity.RelationType;
  */
 public enum AnnotationRelationType implements RelationType {
     
-       TYPE_OF, PART_OF, CATALOGRAPHIC_DESCRIPTION_OF;
+       TYPE_OF, PART_OF, CATALOGRAPHIC_DESCRIPTION_OF, HAS_CHILD, HAS_PARENT;
      
 }
