@@ -1,8 +1,10 @@
 package it.cnr.ilc.lc.omega.core;
 
 import it.cnr.ilc.lc.omega.core.annotation.AnnotationRelationType;
-import it.cnr.ilc.lc.omega.core.datatype.ADTAbstractAnnotation;
 import it.cnr.ilc.lc.omega.core.datatype.ADTAnnotation;
+import it.cnr.ilc.lc.omega.core.dto.ADTAnnotationSource;
+import it.cnr.ilc.lc.omega.core.dto.ADTAnnotationTarget;
+import it.cnr.ilc.lc.omega.core.dto.DTOValueRM;
 import it.cnr.ilc.lc.omega.core.spi.ResourceManagerSPI;
 import it.cnr.ilc.lc.omega.entity.Annotation;
 import it.cnr.ilc.lc.omega.entity.AnnotationBuilder;
@@ -16,6 +18,7 @@ import it.cnr.ilc.lc.omega.exception.InvalidURIException;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
+import java.util.logging.Level;
 import javax.activation.MimeType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -150,19 +153,36 @@ public final class ResourceManager {
     public <T extends Content, E extends Annotation.Data> void
             saveAnnotation(final Annotation<T, E> annotation) throws ManagerAction.ActionException {
 
-        new ManagerAction() {
+        try {
+            new ManagerAction() {
 
-            @Override
-            protected Boolean action() {
-                for (ResourceManagerSPI manager : managers) {
-                    manager.save(annotation);
-                    return true;
+                @Override
+                protected Boolean action() {
+                    for (ResourceManagerSPI manager : managers) {
+                        manager.merge(annotation);
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
-            }
 
-        }.doAction();
+            }.doAction();
+        } catch (ManagerAction.ActionException e) {
+            log.error(String.format("On saveAnnotation with entitymanager.merge(): %s, %s", e.getCause(), e.getClass()));
+            log.error("An alternative politic (like persist()) should be implemented...");
+//            new ManagerAction() {
+//
+//                @Override
+//                protected Boolean action() {
+//                    for (ResourceManagerSPI manager : managers) {
+//                        manager.persist(annotation);
+//                        return true;
+//                    }
+//                    return false;
+//                }
+//
+//            }.doAction();
 
+        }
     }
 
     public <T extends Content> void saveSource(final Source<T> source) throws ManagerAction.ActionException {
@@ -172,7 +192,7 @@ public final class ResourceManager {
             @Override
             protected Boolean action() {
                 for (ResourceManagerSPI manager : managers) {
-                    manager.save(source);
+                    manager.persist(source);
                     return true;
                 }
                 return false;
@@ -431,7 +451,7 @@ public final class ResourceManager {
         }.doAction();
     }
 
-    public void updateAnnotationRelation(ADTAnnotation source, ADTAnnotation target, AnnotationRelationType type) throws ManagerAction.ActionException {
+    public void updateAnnotationRelation(ADTAnnotationSource source, ADTAnnotationTarget target, AnnotationRelationType type) throws ManagerAction.ActionException {
         new ManagerAction() {
 
             @Override
@@ -439,7 +459,7 @@ public final class ResourceManager {
                 for (ResourceManagerSPI manager : managers) {
                     if (manager.getMimeType().getBaseType().equals(OmegaMimeType.PLAIN.toString())) {
                         manager.update(UpdateAction.ANNOTATION_RELATION, AnnotationRelation.newInstance(type),
-                                new ResourceStatus().sourceAnnotation(source).targetAnnotation(target));
+                                new ResourceStatus().sourceAnnotation(source.getValue()).targetAnnotation(target.getValue()));
                         return true;
                     }
                 }
@@ -447,6 +467,18 @@ public final class ResourceManager {
                 throw new ManagerAction.ActionException(new Exception("No suitable manager for updateAnnotationRelation"));
             }
         }.doAction();
+    }
+
+    public void updateAnnotationRelation(ADTAnnotation source, ADTAnnotation target, AnnotationRelationType type) throws ManagerAction.ActionException {
+        try {
+
+            ADTAnnotationSource src = DTOValueRM.instantiate(ADTAnnotationSource.class).withValue(source);
+            ADTAnnotationTarget trg = DTOValueRM.instantiate(ADTAnnotationTarget.class).withValue(target);
+            updateAnnotationRelation(src, trg, type);
+
+        } catch (InstantiationException | IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(ResourceManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
 }

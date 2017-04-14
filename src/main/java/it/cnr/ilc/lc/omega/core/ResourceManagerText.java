@@ -2,7 +2,6 @@ package it.cnr.ilc.lc.omega.core;
 
 import it.cnr.ilc.lc.omega.annotation.DummyAnnotation;
 import it.cnr.ilc.lc.omega.annotation.DummyAnnotationBuilder;
-import it.cnr.ilc.lc.omega.annotation.structural.WorkAnnotation;
 import it.cnr.ilc.lc.omega.core.datatype.ADTAnnotation;
 import it.cnr.ilc.lc.omega.core.spi.ResourceManagerSPI;
 import it.cnr.ilc.lc.omega.core.util.Utils;
@@ -30,17 +29,11 @@ import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
 import javax.persistence.TransactionRequiredException;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.FetchParent;
-import javax.persistence.criteria.JoinType;
-import javax.persistence.criteria.Path;
-import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import javax.persistence.criteria.Subquery;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import sirius.kernel.di.std.Part;
@@ -148,7 +141,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
 //        session.beginTransaction();
 //        Source<TextContent> source = session.loadAll(Source.class, new Filter("uri", sourceUri.toASCIIString())).iterator().next();
 //        source.setContent(session.loadAll(TextContent.class, new Filter("uri", targetUri.toASCIIString())).iterator().next());
-//        session.save(source);
+//        session.persist(source);
 //        session.getTransaction().commit();
         throw new UnsupportedOperationException("to be implemented");
 
@@ -170,7 +163,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
 //        /*TODO controllare se URI target e' un Source oppure un folder. Se è un folder va chiamato il metodo folder.addFolder*/
 //        Source<TextContent> source = session.loadAll(Source.class, new Filter("uri", targetUri.toASCIIString())).iterator().next();
 //        folder.addFile(source);
-//        session.save(folder);
+//        session.persist(folder);
 //        session.getTransaction().commit();
 //    }
     @Override
@@ -183,10 +176,10 @@ public class ResourceManagerText implements ResourceManagerSPI {
     }
 
     @Override
-    public <T extends SuperNode> void save(T resource) {
+    public <T extends SuperNode> void persist(T resource) {
 
 //        Session session = Neo4jSessionFactory.getNeo4jSession();
-//        session.save(resource);
+//        session.persist(resource);
         log.info("persist resource, is the transaction active? " + persistence.getEntityManager().getTransaction().isActive());
         try {
 
@@ -197,6 +190,40 @@ public class ResourceManagerText implements ResourceManagerSPI {
         }
         // throw new UnsupportedOperationException("to be implemented");
 
+    }
+
+    @Override
+    public <T extends SuperNode> void merge(T resource) {
+
+        log.info("merge resource, is the transaction active? " + persistence.getEntityManager().getTransaction().isActive());
+        try {
+
+            persistence.getEntityManager().merge(resource);
+            log.debug("resource merged");
+        } catch (EntityExistsException | TransactionRequiredException e) {
+            log.error("in merge resource " + e);
+        }
+    }
+
+    @Override
+    public <T extends SuperNode> Enum<EntityStatusEnum> status(T resource) {
+        log.info("merge resource, is the transaction active? " + persistence.getEntityManager().getTransaction().isActive());
+
+        Enum<EntityStatusEnum> status = EntityStatusEnum.NAN;
+        try {
+
+            if (persistence.getEntityManager().contains(resource)) {
+                status = EntityStatusEnum.MANAGED;
+                log.debug("resource managed");
+            } else {
+                status = EntityStatusEnum.UNMANAGED;
+                log.debug("resource unmanaged");
+            }
+        } catch (EntityExistsException | TransactionRequiredException e) {
+            log.error("in merge resource " + e);
+        }
+
+        return status;
     }
 
     private TextLocus createLocus(URI uri) throws InvalidURIException {
@@ -351,10 +378,10 @@ public class ResourceManagerText implements ResourceManagerSPI {
 
         Optional<ADTAnnotation> source = status.getSourceAnnotation();
         source.get().registerAsSource(relation);
-        
+
         Optional<ADTAnnotation> target = status.getTargetAnnotation();
         target.get().registerAsTarget(relation);
-        
+
         return relation;
     }
 

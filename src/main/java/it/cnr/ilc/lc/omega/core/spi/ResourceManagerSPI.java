@@ -1,5 +1,6 @@
 package it.cnr.ilc.lc.omega.core.spi;
 
+import it.cnr.ilc.lc.omega.core.EntityStatusEnum;
 import it.cnr.ilc.lc.omega.core.ResourceManager;
 import it.cnr.ilc.lc.omega.core.ResourceStatus;
 import it.cnr.ilc.lc.omega.entity.Annotation;
@@ -46,7 +47,11 @@ public interface ResourceManagerSPI {
             update(ResourceManager.UpdateAction updateAction, T resource, ResourceStatus status); // update con risorsa da aggiornare e restituisce la risorsa aggiornata
 
     /* DATABASE */
-    public <T extends SuperNode> void save(T resource);
+    public <T extends SuperNode> void persist(T resource);
+
+    public <T extends SuperNode> void merge(T resource);
+
+    public <T extends SuperNode> Enum<EntityStatusEnum> status(T resource);
 
     public <T extends SuperNode> T load(URI uri, Class<T> clazz);
 

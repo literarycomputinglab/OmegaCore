@@ -16,6 +16,8 @@ import org.apache.logging.log4j.Logger;
 /**
  *
  * @author oakgen
+ * @author simone
+ * @author angelo
  */
 public class OmegaCore {
 
