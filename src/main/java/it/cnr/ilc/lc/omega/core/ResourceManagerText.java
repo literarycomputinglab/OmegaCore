@@ -18,6 +18,7 @@ import it.cnr.ilc.lc.omega.exception.InvalidURIException;
 import it.cnr.ilc.lc.omega.persistence.PersistenceHandler;
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URLConnection;
 import java.util.List;
@@ -29,6 +30,8 @@ import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.RollbackException;
 import javax.persistence.TransactionRequiredException;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -36,6 +39,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hibernate.exception.ConstraintViolationException;
 import sirius.kernel.di.std.Part;
 import sirius.kernel.di.std.Register;
 
@@ -68,7 +72,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
     }
 
     @Override
-    public <T extends SuperNode> T create(ResourceManager.CreateAction createAction, URI uri) throws InvalidURIException {
+    public <T extends SuperNode> T create(ResourceManager.CreateAction createAction, URI uri) {
         switch (createAction) {
             case SOURCE:
                 return (T) createSource(uri);
@@ -100,15 +104,15 @@ public class ResourceManagerText implements ResourceManagerSPI {
         }
     }
 
-    private Source<TextContent> createSource(URI uri) throws InvalidURIException {
+    private Source<TextContent> createSource(URI uri) {
         // controllare che la risorsa non sia già presente con lo stesso URI
         Source<TextContent> source = Source.sourceOf(TextContent.class, uri);
-        source.setUri(uri.toASCIIString());
-        log.info("source uri: " + uri.toASCIIString());
+        log.info("source uri: " + source.getUri());
+        
         return source;
     }
 
-    private TextContent createContent(URI uri) throws InvalidURIException {
+    private TextContent createContent(URI uri) {
 
         TextContent content = Content.contentOf(TextContent.class); // non mi piace il tipo così specifico
 
@@ -124,13 +128,14 @@ public class ResourceManagerText implements ResourceManagerSPI {
             URLConnection site = uri.toURL().openConnection(); //PER CARICARE RISORSA REMOTA
             content.setText(new Scanner(new BufferedInputStream(site.getInputStream()), "UTF-8").useDelimiter(Pattern.compile("\\A")).next());
 
+        } catch (MalformedURLException mue) {
+            log.error("In verify URI as an URL: " + uri.toASCIIString() + " => " + mue.getMessage());
         } catch (IOException e) {
             log.error("Opening connection", e);
         } catch (IllegalArgumentException ex) {
             //Logger.getLogger(ResourceManagerText.class.getName()).log(Level.WARNING, "Invalid URI: " + uri.toASCIIString(), new IllegalArgumentException("Invalid URI: " + uri.toASCIIString()));
             log.warn("Invalid URI " + uri.toASCIIString() + ", " + ex.getLocalizedMessage());
             //LA RISORSA NON E' REMOTA
-            content.setText("");
         }
         return content;
     }
@@ -186,10 +191,13 @@ public class ResourceManagerText implements ResourceManagerSPI {
             persistence.getEntityManager().persist(resource);
             log.debug("resource persisted");
         } catch (EntityExistsException | TransactionRequiredException e) {
+            // } catch (Exception e) {
             log.error("in persist resource " + e);
-        }
-        // throw new UnsupportedOperationException("to be implemented");
+        } catch (org.hibernate.exception.ConstraintViolationException e2) {
+            // throw new UnsupportedOperationException("to be implemented");            log.error("in persist resource " + e);
+            log.error("in persist resource 2 ", e2);
 
+        }
     }
 
     @Override
@@ -226,7 +234,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
         return status;
     }
 
-    private TextLocus createLocus(URI uri) throws InvalidURIException {
+    private TextLocus createLocus(URI uri) {
 
         TextLocus locus = Locus.locusOf(TextLocus.class, uri, Locus.PointsTo.CONTENT);
         locus.setUri(uri.toASCIIString());
@@ -235,23 +243,29 @@ public class ResourceManagerText implements ResourceManagerSPI {
     }
 
     @Override
-    public <T extends SuperNode> T load(URI uri, Class<T> clazz) {
+    public <T> T load(URI uri, Class<T> clazz) {
 //        Session session = Neo4jSessionFactory.getNeo4jSession();
 //        Source<TextContent> source = session.loadAll(Source.class, new Filter("uri", uri.toASCIIString())).iterator().next();
 //
 //        return (T) source;
+        T result = null;
         EntityManager em = persistence.getEntityManager();
         log.info("load resource, is the transaction active? " + em.getTransaction().isActive());
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<T> cq = cb.createQuery(clazz);
+
         Root<T> root = cq.from(clazz);
         cq.where(cb.equal(root.get("uri"), uri.toASCIIString()));
 
         TypedQuery<T> q = em.createQuery(cq);
-        T result = q.getSingleResult();
 
-        //System.err.println("result " + result);
+        try {
+            result = q.getSingleResult();
+        } catch (NoResultException e) {
+            log.warn(e.getMessage());
+        }
+
 //        loadAll(Source.sourceOf(TextContent.class, URI.create("")).getClass());
         return result;
     }

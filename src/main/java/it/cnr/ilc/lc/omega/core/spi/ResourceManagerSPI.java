@@ -29,7 +29,7 @@ public interface ResourceManagerSPI {
 
     /* CREATE */
     public <T extends SuperNode> T
-            create(ResourceManager.CreateAction createAction, URI uri) throws InvalidURIException; // considerare anche la creazione di una annotazione attraverso questa funzione? Problema per il passaggio del builder?
+            create(ResourceManager.CreateAction createAction, URI uri); // considerare anche la creazione di una annotazione attraverso questa funzione? Problema per il passaggio del builder?
     //FIXME: refactoring del metodo come SAVE
 
     /*public <T extends SuperNode> T
@@ -53,7 +53,8 @@ public interface ResourceManagerSPI {
 
     public <T extends SuperNode> Enum<EntityStatusEnum> status(T resource);
 
-    public <T extends SuperNode> T load(URI uri, Class<T> clazz);
+    // public <T extends SuperNode> T load(URI uri, Class<T> clazz);
+    public <T> T load(URI uri, Class<T> clazz);
 
     public <T extends SuperNode> List<T> loadAll(Class<T> clazz);
 

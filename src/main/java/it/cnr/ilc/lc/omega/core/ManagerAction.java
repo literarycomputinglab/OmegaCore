@@ -5,6 +5,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import sirius.kernel.di.std.Part;
 import javax.persistence.EntityManager;
+import javax.persistence.RollbackException;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 /**
  *
@@ -35,6 +37,9 @@ public abstract class ManagerAction {
         } catch (ActionException e) {
             log.error("In transaction ", e);
             throw new ActionException(e);
+        } catch (RollbackException rbe) {
+            log.error("Errore in commit: " + ExceptionUtils.getRootCause(rbe.getCause()).getMessage());
+            throw new ActionException(ExceptionUtils.getRootCause(rbe));
         } finally {
             try {
                 if (null != entityManager) {
@@ -56,6 +61,10 @@ public abstract class ManagerAction {
 
         public ActionException(Exception e) {
             super(e);
+        }
+
+        public ActionException(Throwable t) {
+            super(t);
         }
     }
 }

@@ -16,8 +16,8 @@ public class Utils {
     public static final String CONTENT_PATH = "content";
     public static final String SEPARATOR_URL_PATH = "/";
 
-  public static String appendContentID(URI uri) {
-      String s = uri.toASCIIString();
+    public static String appendContentID(URI uri) {
+        String s = uri.toASCIIString();
         if (!s.endsWith(SEPARATOR_URL_PATH)) {
             s = s.concat(SEPARATOR_URL_PATH);
         }
@@ -29,15 +29,20 @@ public class Utils {
         return s + type + SEPARATOR_URL_PATH + System.currentTimeMillis();
     }
 
+    private static String trailingSlash(URI uri) {
+        String s = uri.toASCIIString();
+        if (s.endsWith("/")) {
+            s = s.substring(0, s.length() - 1);
+        }
+        return s;
+    }
+
     public static void main(String[] args) {
 
         URI uri = URI.create("http://claviusontheweb.it:8080/exist/rest//db/clavius/documents/147/147.txt");
-        
+
         System.err.println(uri.getSchemeSpecificPart());
 
     }
-    
-    
+
 }
-
-

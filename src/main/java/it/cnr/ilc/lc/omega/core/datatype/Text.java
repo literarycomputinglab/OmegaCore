@@ -12,6 +12,7 @@ import it.cnr.ilc.lc.omega.entity.Annotation;
 import it.cnr.ilc.lc.omega.entity.Source;
 import it.cnr.ilc.lc.omega.entity.TextContent;
 import it.cnr.ilc.lc.omega.exception.InvalidURIException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +45,7 @@ public class Text {
     @Part
     private static SearchManager searchManager;
 
-    private Text(String text, URI uri) throws ManagerAction.ActionException, InvalidURIException {
+    private Text(String text, URI uri) throws ManagerAction.ActionException {
 
         init(text, uri);
     }
@@ -60,8 +61,21 @@ public class Text {
         return new Text("", uri);
     }
 
-    public static Text of(String text, URI uri) throws ManagerAction.ActionException, InvalidURIException {
-        log.info("text " + text + "uri " + uri);
+    public static Text of(String text, URI uri) throws ManagerAction.ActionException {
+        if (null == text) {
+            log.error("Invalid text parameter: text is null!");
+            throw new NullPointerException("Invalid text parameter!");
+        }
+        try {
+            if (null != uri.toURL()) { //SE la URI e' una URL => eccezione!
+                log.error("URI must not be an URL when text is specified! URI: " + uri.toASCIIString());
+                throw new InvalidURIException("URI must not be an URL when text is specified! URI: " + uri.toASCIIString());
+            }
+        } catch (MalformedURLException ex) {
+        } catch (IllegalArgumentException iae) {
+        }
+
+        log.info("text " + text + ", uri " + uri);
         //FIXME Aggiungere URI della annotazione
         return new Text(text, uri);
     }
@@ -98,7 +112,7 @@ public class Text {
     public static List<Annotation<TextContent, ?>> loadAllAnnotations() throws ManagerAction.ActionException {
 
         List<Annotation<TextContent, ?>> lostc = resourceManager.loadAllAnnotation(TextContent.class);
-        log.info("oadAllAnnotation() result lenght " + lostc.size());
+        log.info("loadAllAnnotation() result lenght " + lostc.size());
 
         return lostc;
     }
@@ -107,7 +121,7 @@ public class Text {
 
         Annotation<TextContent, ?> ann = resourceManager.loadAnnotation(uri, TextContent.class);
         log.info("loadAnnotation() ann is [" + ann + "]");
-        log.info ("loci " + ann.getLociIterator(TextContent.class).next());
+        //log.info ("loci " + ann.getLociIterator(TextContent.class).next());
         return ann;
     }
 
@@ -124,7 +138,7 @@ public class Text {
         return ret;
     }
 
-    private void init(String text, URI uri) throws ManagerAction.ActionException, InvalidURIException {
+    private void init(String text, URI uri) throws ManagerAction.ActionException {
         log.info("resourceManager=(" + resourceManager + ")");
         try {
             source = resourceManager.createSource(uri,

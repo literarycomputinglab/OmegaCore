@@ -67,6 +67,22 @@ public final class ResourceManager {
 
     }
 
+    public enum LoadError {
+        
+        NORESULT("/error/noresult");
+        
+        private final String uri;
+
+        private LoadError(String uri) {
+            this.uri = uri;
+        }
+        
+        public String getUri () {
+            return this.uri;
+        }
+        
+    }
+            
     @Parts(value = ResourceManagerSPI.class)
     private Collection<ResourceManagerSPI> managers;
 
@@ -81,13 +97,14 @@ public final class ResourceManager {
                 log.info("createSource: (" + uri + ", " + mimeType.getBaseType() + ")");
                 for (ResourceManagerSPI manager : managers) {
                     if (manager.getMimeType().getBaseType().equals(mimeType.getBaseType())) {
-                        try {
+//                        try {        content.setUri(Utils.appendContentID(uri));
+
                             Source<T> source = manager.create(CreateAction.SOURCE, uri);
                             return source;
-                        } catch (InvalidURIException ex) {
-                            log.error("creating source", ex);
-                            throw new ManagerAction.ActionException(ex);
-                        }
+//                        } catch (InvalidURIException ex) {
+//                            log.error("creating source", ex);
+//                            throw new ManagerAction.ActionException(ex);
+//                        }
 
                     }
                 }
@@ -99,26 +116,26 @@ public final class ResourceManager {
         //TODO: se il metodo non trova un manager appropriato non crea il source e quindi solleva un eccezione
     }
 
-    public <T extends Content> T createSourceContent(final Source<T> source) throws ManagerAction.ActionException, InvalidURIException {
+    public <T extends Content> T createSourceContent(final Source<T> source) throws ManagerAction.ActionException {
         // System.err.println("createSourceContent: (" + source.toString()+ ")");
         return new ManagerAction() { // FIXME attenzione questa soluzione presenta un problema con la session.getTeransaction().commit() - capire!!
 
             @Override
             protected T action() throws ActionException {
-                log.info("action(): (" + source.toString() + ")");
+                log.info("action(): (" + source.getUri() + ")");
                 T content = null;
                 for (ResourceManagerSPI manager : managers) {
-                    log.info("manager" + manager.toString() + ")");
+                    log.info("manager: " + manager.toString() + ")");
                     if (manager.getMimeType().getBaseType().equals(OmegaMimeType.PLAIN.toString())) {
                         //  if (manager instanceof ResourceManagerText) {
-                        try {
+//                        try {
                             content = manager.create(CreateAction.CONTENT,
                                     URI.create(source.getUri()));
 
-                        } catch (InvalidURIException ex) {
-                            log.error("creating source content", ex);
-                            throw new ActionException(ex);
-                        }
+//                        } catch (InvalidURIException ex) {
+//                            log.error("creating source content", ex);
+//                            throw new ActionException(ex);
+//                        }
                         return content;
                     }
                 }
@@ -209,10 +226,14 @@ public final class ResourceManager {
             @Override
             protected Source<T> action() throws ManagerAction.ActionException {
                 for (ResourceManagerSPI manager : managers) {
-                    return manager.load(uri, Source.class);
+                    Source<T> s = manager.load(uri, Source.class);
+                    if (null == s) {
+                        s = Source.sourceOf(clazz, URI.create(LoadError.NORESULT.getUri()));
+                    }
+                    return s;
                 }
-                log.error("loadSource(): Unable to load resource at uri " + uri);
-                throw new ActionException(new Exception("loadSource(): Unable to load resource at uri " + uri));
+                log.error("loadSource(): Unable to find a manager loading uri " + uri);
+                throw new ActionException(new Exception("loadSource(): Unable to find a manager loading uri " + uri));
             }
 
         }.doAction();
@@ -291,17 +312,17 @@ public final class ResourceManager {
                 TextLocus locus;
                 for (ResourceManagerSPI manager : managers) {
                     if (manager.getMimeType().getBaseType().equals(OmegaMimeType.PLAIN.toString())) {
-                        try {
+//                        try {
                             locus = manager.create(CreateAction.LOCUS,
                                     URI.create("/uri/annotation/locus/" + String.valueOf(System.currentTimeMillis())));
                             // locus.setStart(start); //FIXME i metodi per aggiornare il locus devono essere fatti nel manager
                             // locus.setEnd(end);
                             // locus.setSource(source);
                             // locus.setAnnotation(annotation);
-                        } catch (InvalidURIException ex) {
-                            log.error("creating a URI ", ex);
-                            throw new ActionException(ex);
-                        }
+//                        } catch (InvalidURIException ex) {
+//                            log.error("creating a URI ", ex);
+//                            throw new ActionException(ex);
+//                        }
 
                         locus = manager.update(UpdateAction.LOCUS, locus,
                                 new ResourceStatus<>() // controllare i tipi generici
@@ -390,7 +411,7 @@ public final class ResourceManager {
 
                 for (ResourceManagerSPI manager : managers) {
                     if (manager.getMimeType().getBaseType().equals(OmegaMimeType.PLAIN.toString())) { //WARN l'IF dipende da T e non dal tipo del manager
-                        try {
+//                        try {
                             locus = manager.create(CreateAction.LOCUS,
                                     URI.create("/resourcemanager/createLocus/action/locus/" + System.currentTimeMillis())); //FIXME: da metteer in Utils la creazione delle uri
                             manager.update(UpdateAction.LOCUS, locus,
@@ -400,10 +421,10 @@ public final class ResourceManager {
                                             .source(source)
                                             .pointsTo(Locus.PointsTo.CONTENT));
                             return locus;
-                        } catch (InvalidURIException ex) {
-                            log.error("creating a URI ", ex);
-                            throw new ManagerAction.ActionException(new Exception("AAAAAAAAAAHHHHHHHH BUG!!!"));
-                        }
+//                        } catch (InvalidURIException ex) {
+//                            log.error("creating a URI ", ex);
+//                            throw new ManagerAction.ActionException(new Exception("AAAAAAAAAAHHHHHHHH BUG!!!"));
+//                        }
                     }
                 }
                 log.error("No suitable manager for Locus<TextContent>");
