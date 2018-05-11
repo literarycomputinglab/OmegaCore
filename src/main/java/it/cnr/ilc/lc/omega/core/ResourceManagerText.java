@@ -108,7 +108,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
         // controllare che la risorsa non sia già presente con lo stesso URI
         Source<TextContent> source = Source.sourceOf(TextContent.class, uri);
         log.info("source uri: " + source.getUri());
-        
+
         return source;
     }
 
@@ -276,21 +276,53 @@ public class ResourceManagerText implements ResourceManagerSPI {
         List<T> ret = null;
         log.info("Loading all, clazz is " + clazz);
         if (clazz.isInstance(Source.sourceOf(TextContent.class, URI.create("dummyURI")))) {
+            log.info("loading all " + clazz.toString() + " object instance of Source");
+
             ret = (List<T>) loadAllTextResource((Source.sourceOf(TextContent.class, URI.create("dummyURI"))).getClass());
         } else {
             try {
                 Annotation.register("dummy", DummyAnnotation.class);
 
                 if (clazz.isInstance(Annotation.newAnnotation("dummy", new DummyAnnotationBuilder().URI(URI.create("/dummyUri/"))))) {
+                    log.info("loading all " + clazz + " object instance of Annotation");
+
                     ret = (List<T>) loadAllTextResource(Annotation.newAnnotation("dummy", new DummyAnnotationBuilder().URI(URI.create("/dummyUri/"))).getClass());
                 } else {
-                    throw new IllegalArgumentException("Aspected TextContent as resource type");
+                    log.info("loading all " + clazz.toString() + " object instance of Other");
+                    ret = (List<T>) loadAllTextResource(clazz);
+//                    throw new IllegalArgumentException("Aspected TextContent as resource type");
                 }
             } catch (InvalidURIException ex) {
-                java.util.logging.Logger.getLogger(ResourceManagerText.class.getName()).log(Level.SEVERE, null, ex);
+                log.error(ex);
             }
         }
 
+        return ret;
+    }
+
+    //@Override
+    public <T extends SuperNode> List<T> loadAll2(Class<T> clazz) {
+
+        List<T> ret = null;
+        log.info("Loading all, clazz is " + clazz);
+        Annotation.register("dummy", DummyAnnotation.class);
+
+        if (clazz.isInstance(Source.sourceOf(TextContent.class, URI.create("dummyURI")))) {
+            log.info("loading all (" + clazz.toString() + ") object instance of Source");
+            ret = (List<T>) loadAllTextResource(clazz);
+
+        } else if (clazz.isInstance(Annotation.newAnnotation("dummy", new DummyAnnotationBuilder().URI(URI.create("/dummyUri/"))))) {
+            log.info("loading all (" + clazz.toString() + ") object instance of Annotation");
+
+            ret = (List<T>) loadAllTextResource(clazz);
+
+        } else {
+            log.info("loading all (" + clazz.toString() + ") object instance of Other");
+            ret = (List<T>) loadAllTextResource(clazz);
+        }
+//        else {
+//                    throw new IllegalArgumentException("Aspected TextContent as resource type");
+//    }
         return ret;
     }
 

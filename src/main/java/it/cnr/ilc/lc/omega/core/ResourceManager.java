@@ -1,5 +1,6 @@
 package it.cnr.ilc.lc.omega.core;
 
+import it.cnr.ilc.lc.omega.annotation.structural.WorkAnnotation;
 import it.cnr.ilc.lc.omega.core.annotation.AnnotationRelationType;
 import it.cnr.ilc.lc.omega.core.datatype.ADTAnnotation;
 import it.cnr.ilc.lc.omega.core.dto.ADTAnnotationSource;
@@ -19,6 +20,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.activation.MimeType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -276,12 +278,43 @@ public final class ResourceManager {
 
     }
 
+    /**
+     * 
+     * 
+     * @param <T> Tipo del Content (es. TextContent)
+     * @param <E> Tipo della annotazione (es. WorkAnnotation)
+     * @param clazz Classe del Content
+     * @param datazz Classe del tipo di annotazione
+     * @return lista di annotazioni di tipo E su i content di tipo T (es. Annotation&gt;TextContent, WorkAnnotation&lt;)
+     * @throws it.cnr.ilc.lc.omega.core.ManagerAction.ActionException 
+     */
+    public <T extends Content, E extends Annotation.Data> List<Annotation<T, E>> loadAllAnnotationData(Class<T> clazz, Class<E> datazz) throws ManagerAction.ActionException {
+
+        return new ManagerAction() {
+
+            @Override
+            protected List<Annotation> action() throws ManagerAction.ActionException {
+                for (ResourceManagerSPI manager : managers) {
+                    List<E> los = manager.loadAll(datazz);
+                    
+                    List<Annotation> loa = los.stream().map( E::getAnnotation ).collect(Collectors.toList());
+                    
+                    return loa;
+                }
+                log.error("loadAllAnnotation(): Unable to load all annotations");
+                throw new ManagerAction.ActionException(new Exception("loadAllAnnotation(): Unable to load all annotations"));
+            }
+
+        }.doAction();
+
+    }
+    
     public <T extends Content> Annotation<T, ?> loadAnnotation(final URI uri, Class<T> clazz) throws ManagerAction.ActionException {
 
         return new ManagerAction() {
 
             @Override
-            protected Source<T> action() throws ManagerAction.ActionException {
+            protected Source<T> action() throws ManagerAction.ActionException { // IL tipo di ritorno e' una Source: poco corretto ma Annotation extends Source
                 for (ResourceManagerSPI manager : managers) {
                     return manager.load(uri, Annotation.class);
                 }
