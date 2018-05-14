@@ -1,6 +1,5 @@
 package it.cnr.ilc.lc.omega.core;
 
-import it.cnr.ilc.lc.omega.annotation.structural.WorkAnnotation;
 import it.cnr.ilc.lc.omega.core.annotation.AnnotationRelationType;
 import it.cnr.ilc.lc.omega.core.datatype.ADTAnnotation;
 import it.cnr.ilc.lc.omega.core.dto.ADTAnnotationSource;
@@ -70,21 +69,21 @@ public final class ResourceManager {
     }
 
     public enum LoadError {
-        
+
         NORESULT("/error/noresult");
-        
+
         private final String uri;
 
         private LoadError(String uri) {
             this.uri = uri;
         }
-        
-        public String getUri () {
+
+        public String getUri() {
             return this.uri;
         }
-        
+
     }
-            
+
     @Parts(value = ResourceManagerSPI.class)
     private Collection<ResourceManagerSPI> managers;
 
@@ -101,8 +100,8 @@ public final class ResourceManager {
                     if (manager.getMimeType().getBaseType().equals(mimeType.getBaseType())) {
 //                        try {        content.setUri(Utils.appendContentID(uri));
 
-                            Source<T> source = manager.create(CreateAction.SOURCE, uri);
-                            return source;
+                        Source<T> source = manager.create(CreateAction.SOURCE, uri);
+                        return source;
 //                        } catch (InvalidURIException ex) {
 //                            log.error("creating source", ex);
 //                            throw new ManagerAction.ActionException(ex);
@@ -131,8 +130,8 @@ public final class ResourceManager {
                     if (manager.getMimeType().getBaseType().equals(OmegaMimeType.PLAIN.toString())) {
                         //  if (manager instanceof ResourceManagerText) {
 //                        try {
-                            content = manager.create(CreateAction.CONTENT,
-                                    URI.create(source.getUri()));
+                        content = manager.create(CreateAction.CONTENT,
+                                URI.create(source.getUri()));
 
 //                        } catch (InvalidURIException ex) {
 //                            log.error("creating source content", ex);
@@ -279,14 +278,15 @@ public final class ResourceManager {
     }
 
     /**
-     * 
-     * 
+     *
+     *
      * @param <T> Tipo del Content (es. TextContent)
      * @param <E> Tipo della annotazione (es. WorkAnnotation)
      * @param clazz Classe del Content
      * @param datazz Classe del tipo di annotazione
-     * @return lista di annotazioni di tipo E su i content di tipo T (es. Annotation&gt;TextContent, WorkAnnotation&lt;)
-     * @throws it.cnr.ilc.lc.omega.core.ManagerAction.ActionException 
+     * @return lista di annotazioni di tipo E su i content di tipo T (es.
+     * Annotation&gt;TextContent, WorkAnnotation&lt;)
+     * @throws it.cnr.ilc.lc.omega.core.ManagerAction.ActionException
      */
     public <T extends Content, E extends Annotation.Data> List<Annotation<T, E>> loadAllAnnotationData(Class<T> clazz, Class<E> datazz) throws ManagerAction.ActionException {
 
@@ -296,9 +296,9 @@ public final class ResourceManager {
             protected List<Annotation> action() throws ManagerAction.ActionException {
                 for (ResourceManagerSPI manager : managers) {
                     List<E> los = manager.loadAll(datazz);
-                    
-                    List<Annotation> loa = los.stream().map( E::getAnnotation ).collect(Collectors.toList());
-                    
+
+                    List<Annotation> loa = los.stream().map(E::getAnnotation).collect(Collectors.toList());
+
                     return loa;
                 }
                 log.error("loadAllAnnotation(): Unable to load all annotations");
@@ -308,7 +308,7 @@ public final class ResourceManager {
         }.doAction();
 
     }
-    
+
     public <T extends Content> Annotation<T, ?> loadAnnotation(final URI uri, Class<T> clazz) throws ManagerAction.ActionException {
 
         return new ManagerAction() {
@@ -346,12 +346,12 @@ public final class ResourceManager {
                 for (ResourceManagerSPI manager : managers) {
                     if (manager.getMimeType().getBaseType().equals(OmegaMimeType.PLAIN.toString())) {
 //                        try {
-                            locus = manager.create(CreateAction.LOCUS,
-                                    URI.create("/uri/annotation/locus/" + String.valueOf(System.currentTimeMillis())));
-                            // locus.setStart(start); //FIXME i metodi per aggiornare il locus devono essere fatti nel manager
-                            // locus.setEnd(end);
-                            // locus.setSource(source);
-                            // locus.setAnnotation(annotation);
+                        locus = manager.create(CreateAction.LOCUS,
+                                URI.create("/uri/annotation/locus/" + String.valueOf(System.currentTimeMillis())));
+                        // locus.setStart(start); //FIXME i metodi per aggiornare il locus devono essere fatti nel manager
+                        // locus.setEnd(end);
+                        // locus.setSource(source);
+                        // locus.setAnnotation(annotation);
 //                        } catch (InvalidURIException ex) {
 //                            log.error("creating a URI ", ex);
 //                            throw new ActionException(ex);
@@ -433,7 +433,39 @@ public final class ResourceManager {
 
     .doAction();
     }
-         
+       
+            
+    public <T extends Content, V extends Content, L extends Locus<V>> L
+            createLocus(final Source<T> source, Class<V> contentClazz) throws InvalidURIException, ManagerAction.ActionException {
+        return new ManagerAction() {
+            L locus;
+
+            @Override
+            protected L action() throws ManagerAction.ActionException {
+
+                for (ResourceManagerSPI manager : managers) {
+                    if (manager.getMimeType().getBaseType().equals(OmegaMimeType.PLAIN.toString())) { //WARN l'IF dipende da T e non dal tipo del manager
+//                        try {
+                        locus = manager.create(CreateAction.LOCUS,
+                                URI.create("/resourcemanager/createLocus/action/locus/" + System.currentTimeMillis())); //FIXME: da metteer in Utils la creazione delle uri
+                        manager.update(UpdateAction.LOCUS, locus,
+                                new ResourceStatus<T, Annotation.Data, V>()
+                                        .source(source)
+                                        .pointsTo(Locus.PointsTo.SOURCE));
+                        return locus;
+//                        } catch (InvalidURIException ex) {
+//                            log.error("creating a URI ", ex);
+//                            throw new ManagerAction.ActionException(new Exception("AAAAAAAAAAHHHHHHHH BUG!!!"));
+//                        }
+                    }
+                }
+                log.error("No suitable manager for Locus<TextContent>");
+
+                throw new ManagerAction.ActionException(new Exception("No suitable manager for Locus<TextContent>"));
+            }
+        }.doAction();
+    }
+
     public <T extends Content, V extends Content, L extends Locus<V>> L
             createLocus(final Source<T> source, final int start, final int end, Class<V> contentClazz) throws InvalidURIException, ManagerAction.ActionException {
         return new ManagerAction() {
@@ -445,15 +477,15 @@ public final class ResourceManager {
                 for (ResourceManagerSPI manager : managers) {
                     if (manager.getMimeType().getBaseType().equals(OmegaMimeType.PLAIN.toString())) { //WARN l'IF dipende da T e non dal tipo del manager
 //                        try {
-                            locus = manager.create(CreateAction.LOCUS,
-                                    URI.create("/resourcemanager/createLocus/action/locus/" + System.currentTimeMillis())); //FIXME: da metteer in Utils la creazione delle uri
-                            manager.update(UpdateAction.LOCUS, locus,
-                                    new ResourceStatus<T, Annotation.Data, V>()
-                                            .start(start)
-                                            .end(end)
-                                            .source(source)
-                                            .pointsTo(Locus.PointsTo.CONTENT));
-                            return locus;
+                        locus = manager.create(CreateAction.LOCUS,
+                                URI.create("/resourcemanager/createLocus/action/locus/" + System.currentTimeMillis())); //FIXME: da metteer in Utils la creazione delle uri
+                        manager.update(UpdateAction.LOCUS, locus,
+                                new ResourceStatus<T, Annotation.Data, V>()
+                                        .start(start)
+                                        .end(end)
+                                        .source(source)
+                                        .pointsTo(Locus.PointsTo.CONTENT));
+                        return locus;
 //                        } catch (InvalidURIException ex) {
 //                            log.error("creating a URI ", ex);
 //                            throw new ManagerAction.ActionException(new Exception("AAAAAAAAAAHHHHHHHH BUG!!!"));
@@ -479,7 +511,7 @@ public final class ResourceManager {
      * @throws it.cnr.ilc.lc.omega.core.ManagerAction.ActionException
      */
     //RISOLVERE IL PROBLEMA DEL PASSAGGIO DEL LOCUS: NON SI PUO' PASSARE UN TEXTLOCUS O IMAGELOCUS
-    //PERCHE' ESTENDONO DA UNA CLASSSE DI BASE DI TIPO PARAMETRICO DIVERSO (DA IMAGE CONTENT E DA TEXT CONTENT)
+    //PERCHE' ESTENDONO DA UNA CLASSE DI BASE DI TIPO PARAMETRICO DIVERSO (DA IMAGE CONTENT E DA TEXT CONTENT)
     public <T extends Content, E extends Annotation.Data, V extends Content> void
             updateAnnotationLocus(final Locus<V> locus,
                     final Annotation<T, E> annotation,

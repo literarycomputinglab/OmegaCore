@@ -236,7 +236,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
 
     private TextLocus createLocus(URI uri) {
 
-        TextLocus locus = Locus.locusOf(TextLocus.class, uri, Locus.PointsTo.CONTENT);
+        TextLocus locus = Locus.locusOf(TextLocus.class, uri, Locus.PointsTo.SOURCE);
         locus.setUri(uri.toASCIIString());
         return locus;
 
@@ -408,6 +408,11 @@ public class ResourceManagerText implements ResourceManagerSPI {
 
         if (status.getEnd().isPresent()) {
             locus.setEndLocus(status.getEnd().getAsInt());
+        }
+        
+        
+        if (status.getPointsTo().isPresent()) {
+            locus.setPointsTo(status.getPointsTo().get().name());
         }
 
         return locus;
