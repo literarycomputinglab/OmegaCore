@@ -24,14 +24,12 @@ import java.net.URLConnection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
-import java.util.logging.Level;
 import java.util.regex.Pattern;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
-import javax.persistence.RollbackException;
 import javax.persistence.TransactionRequiredException;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -39,7 +37,6 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hibernate.exception.ConstraintViolationException;
 import sirius.kernel.di.std.Part;
 import sirius.kernel.di.std.Register;
 
@@ -398,6 +395,10 @@ public class ResourceManagerText implements ResourceManagerSPI {
     private <E extends Annotation.Data> TextLocus
             updateTextLocus(TextLocus locus, ResourceStatus<TextContent, E, TextContent> status) {
 
+        if (status.getPointsTo().isPresent()) {
+            locus.setPointsTo(status.getPointsTo().get().name());
+        }
+
         if (status.getSource().isPresent()) {
             locus.setSource(status.getSource().get());
         }
@@ -408,11 +409,6 @@ public class ResourceManagerText implements ResourceManagerSPI {
 
         if (status.getEnd().isPresent()) {
             locus.setEndLocus(status.getEnd().getAsInt());
-        }
-        
-        
-        if (status.getPointsTo().isPresent()) {
-            locus.setPointsTo(status.getPointsTo().get().name());
         }
 
         return locus;
