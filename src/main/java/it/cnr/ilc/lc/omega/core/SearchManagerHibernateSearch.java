@@ -56,7 +56,7 @@ public class SearchManagerHibernateSearch implements SearchManagerSPI {
                 .createQuery();
 
         //Query luceneQuery = builder.all().createQuery();
-        log.info("Searching for TextContent");
+        log.info("Searching for TextContent " + query.toString());
 
         javax.persistence.Query persistenceQuery
                 = fullTextEntityManager.createFullTextQuery(query, TextContent.class);

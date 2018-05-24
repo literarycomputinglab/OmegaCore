@@ -520,7 +520,7 @@ public final class ResourceManager {
 
             @Override
             protected Boolean action() throws ManagerAction.ActionException {
-
+                //FIXME controllare che il locus non sia null altrimenti può corrompere la consistenza nel DB
                 for (ResourceManagerSPI manager : managers) {
                     if (manager.getMimeType().getBaseType().equals(OmegaMimeType.PLAIN.toString())) {
                         manager.update(UpdateAction.LOCUS, locus,

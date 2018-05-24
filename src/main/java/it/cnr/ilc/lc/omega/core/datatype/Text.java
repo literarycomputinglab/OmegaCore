@@ -14,8 +14,11 @@ import it.cnr.ilc.lc.omega.entity.TextContent;
 import it.cnr.ilc.lc.omega.exception.InvalidURIException;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.activation.MimeType;
@@ -55,9 +58,17 @@ public class Text {
         this.source = source;
     }
 
-    public static Text of(URI uri) throws ManagerAction.ActionException, InvalidURIException {
-        log.info("uri " + uri);
-        //FIXME Aggiungere URI della annotazione
+    public static Text of(URL url) throws ManagerAction.ActionException, InvalidURIException {
+        log.info("url " + url);
+        //FIXME Aggiungere URI della annotazione (?)
+        URI uri = null;
+        try {
+            uri = url.toURI();
+        } catch (URISyntaxException ex) {
+            log.error(ex.getMessage());
+            throw new InvalidURIException("Can't convert " + url.toString() + " to a URI", ex);
+        }
+
         return new Text("", uri);
     }
 
