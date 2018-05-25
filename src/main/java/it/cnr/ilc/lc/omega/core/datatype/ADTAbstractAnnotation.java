@@ -38,11 +38,21 @@ public abstract class ADTAbstractAnnotation implements ADTAnnotation {
 
     protected abstract Annotation<?, ?> getAnnotation();
 
-    public static <T extends ADTAbstractAnnotation> T of(Class<T> clazz) {
+    public static <T extends ADTAbstractAnnotation> T of(Class<T> clazz, Object... params) {
         try {
-            Method ofMethod = clazz.getMethod("of", String.class, URI.class);
+            log.info("parameters lenght: "+ params.length);
+            
+            Object o1 = params[0];
+            Object o2 = params[1];
+            
+            Class<?> cl1 = o1.getClass();
+            Class<?> cl2 = o2.getClass();
+            
+            log.info("parametri inviati: "+"o1: ("+o1+") o2: ("+o2+") cl1: ("+cl1+") cl2: ("+cl2+").");
+            
+            Method ofMethod = clazz.getMethod("of", cl1, cl2);
             log.info("ofMethods " + clazz.getCanonicalName());
-            return (T) ofMethod.invoke(null, "test", URI.create("/uri/test"));
+            return (T) ofMethod.invoke(null, o1, o2);
         } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
             log.error(ex);
         }
