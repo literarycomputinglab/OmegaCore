@@ -10,8 +10,6 @@ import it.cnr.ilc.lc.omega.entity.AnnotationRelation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.logging.log4j.LogManager;
 
 /**
@@ -40,21 +38,26 @@ public abstract class ADTAbstractAnnotation implements ADTAnnotation {
 
     public static <T extends ADTAbstractAnnotation> T of(Class<T> clazz, URI uri, Object... params) {
         try {
-            
-            log.info("parameters lenght: "+ params.length);
 
+            log.info("parameters lenght: " + params.length);
 
-            Object o1 = params[0];
-            //Object o2 = params[1];
+            Class<?>[] listOfParameterClass = new Class<?>[params.length + 1];
 
-            Class<?> cl1 = o1.getClass();
-            //Class<?> cl2 = o2.getClass();
+            listOfParameterClass[0] = URI.class;
+            for (int i = 0; i < params.length; i++) {
+                listOfParameterClass[i + 1] = params[i].getClass();
+            }
 
-            log.info("parametri inviati: " + "URI: (" + uri + ") - o1: (" + o1 + "), cl1: (" + cl1 + ").");
+            Object[] listOfParameter = new Object[params.length + 1];
 
-            Method ofMethod = clazz.getMethod("of", URI.class, cl1);
+            listOfParameter[0] = uri;
+            for (int i = 0; i < params.length; i++) {
+                listOfParameter[i + 1] = params[i];
+            }
+
+            Method ofMethod = clazz.getMethod("of", listOfParameterClass);
             log.info("ofMethods " + clazz.getCanonicalName());
-            return (T) ofMethod.invoke(null, uri, o1);
+            return (T) ofMethod.invoke(null, listOfParameter);
         } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
             log.error(ex);
         }

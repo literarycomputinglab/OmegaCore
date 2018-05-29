@@ -38,6 +38,7 @@ import javax.persistence.criteria.Root;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import sirius.kernel.di.std.Part;
+import sirius.kernel.di.std.Parts;
 import sirius.kernel.di.std.Register;
 
 /**
