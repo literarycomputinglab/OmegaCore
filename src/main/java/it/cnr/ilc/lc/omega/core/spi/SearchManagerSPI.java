@@ -5,9 +5,9 @@
  */
 package it.cnr.ilc.lc.omega.core.spi;
 
-import it.cnr.ilc.lc.omega.entity.Source;
+import it.cnr.ilc.lc.omega.core.SearchManager;
+import it.cnr.ilc.lc.omega.entity.SuperNode;
 import java.util.List;
-import sirius.kernel.di.std.Register;
 
 /**
  *
@@ -15,6 +15,8 @@ import sirius.kernel.di.std.Register;
  */
 public interface SearchManagerSPI {
 
-    public <T extends Source<?>> List<T> search(String query, Class<T> clazz);
+    public <T extends SuperNode> List<T> search(SearchManager.SearchType type, String query, Class<T> clazz);
+
+    public <E extends SuperNode, T extends SuperNode> List<E> searchOnField(SearchManager.SearchType type, String query, String field, Class<T> clazz);
 
 }

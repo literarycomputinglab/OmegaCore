@@ -8,7 +8,6 @@ package it.cnr.ilc.lc.omega.core.datatype;
 import it.cnr.ilc.lc.omega.core.ManagerAction;
 import it.cnr.ilc.lc.omega.core.ResourceManager;
 import it.cnr.ilc.lc.omega.core.SearchManager;
-import it.cnr.ilc.lc.omega.entity.Annotation;
 import it.cnr.ilc.lc.omega.entity.Source;
 import it.cnr.ilc.lc.omega.entity.TextContent;
 import it.cnr.ilc.lc.omega.exception.InvalidURIException;
@@ -100,7 +99,7 @@ public class Text {
 
         List<Text> array = new ArrayList<>();
         log.info("query " + query);
-        List<Source<TextContent>> lostc = searchManager.searchByKeyword(query);
+        List<Source<TextContent>> lostc = searchManager.searchContentByKeyword(query);
         for (Source<TextContent> source : lostc) {
             array.add(new Text(source));
         }
@@ -117,22 +116,6 @@ public class Text {
             array.add(new Text(source));
         }
         return array;
-    }
-
-    public static List<Annotation<TextContent, ?>> loadAllAnnotations() throws ManagerAction.ActionException {
-
-        List<Annotation<TextContent, ?>> lostc = resourceManager.loadAllAnnotation(TextContent.class);
-        log.info("loadAllAnnotation() result lenght " + lostc.size());
-
-        return lostc;
-    }
-
-    public static Annotation<TextContent, ?> loadAnnotation(URI uri) throws ManagerAction.ActionException {
-
-        Annotation<TextContent, ?> ann = resourceManager.loadAnnotation(uri, TextContent.class);
-        log.info("loadAnnotation() ann is [" + ann + "]");
-        //log.info ("loci " + ann.getLociIterator(TextContent.class).next());
-        return ann;
     }
 
     public List<TextualHit> search(String query) {

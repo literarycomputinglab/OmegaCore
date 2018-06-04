@@ -187,19 +187,7 @@ public final class ResourceManager {
         } catch (ManagerAction.ActionException e) {
             log.error(String.format("On saveAnnotation with entitymanager.merge(): %s, %s", e.getCause(), e.getClass()));
             log.error("An alternative politic (like persist()) should be implemented...");
-//            new ManagerAction() {
-//
-//                @Override
-//                protected Boolean action() {
-//                    for (ResourceManagerSPI manager : managers) {
-//                        manager.persist(annotation);
-//                        return true;
-//                    }
-//                    return false;
-//                }
-//
-//            }.doAction();
-
+            throw new ManagerAction.ActionException(e);
         }
     }
 

@@ -5,12 +5,17 @@
  */
 package it.cnr.ilc.lc.omega.core.datatype;
 
+import it.cnr.ilc.lc.omega.core.ManagerAction;
+import it.cnr.ilc.lc.omega.core.ResourceManager;
 import it.cnr.ilc.lc.omega.entity.Annotation;
 import it.cnr.ilc.lc.omega.entity.AnnotationRelation;
+import it.cnr.ilc.lc.omega.entity.TextContent;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
+import sirius.kernel.di.std.Part;
 
 /**
  *
@@ -20,6 +25,9 @@ public abstract class ADTAbstractAnnotation implements ADTAnnotation {
 
     private static final org.apache.logging.log4j.Logger log = LogManager.getLogger(ADTAbstractAnnotation.class);
 
+    @Part
+    static ResourceManager resourceManager;
+    
     @Override
     public void registerAsSource(AnnotationRelation relation) {
 
@@ -64,4 +72,21 @@ public abstract class ADTAbstractAnnotation implements ADTAnnotation {
         return null;
     }
 
+    
+       public static List<Annotation<TextContent, ?>> loadAllTextAnnotations() throws ManagerAction.ActionException {
+
+        List<Annotation<TextContent, ?>> lostc = resourceManager.loadAllAnnotation(TextContent.class);
+        
+        log.info("loadAllAnnotation() result lenght " + lostc.size());
+
+        return lostc;
+    }
+
+    public static Annotation<TextContent, ?> loadTextAnnotation(URI uri) throws ManagerAction.ActionException {
+
+        Annotation<TextContent, ?> ann = resourceManager.loadAnnotation(uri, TextContent.class);
+        log.info("loadAnnotation() ann is [" + ann + "]");
+        //log.info ("loci " + ann.getLociIterator(TextContent.class).next());
+        return ann;
+    }
 }
