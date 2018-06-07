@@ -35,8 +35,9 @@ public class SearchManagerHibernateSearch implements SearchManagerSPI {
 
     @Override
     public <T extends SuperNode> List<T> search(SearchManager.SearchType type, String queryString, Class<T> clazz) {
-
-        return searchOnField(type, queryString, null, clazz);
+        
+        
+        return searchOnField(type, queryString, "indexField", clazz);
     }
 
     @Override
@@ -60,6 +61,9 @@ public class SearchManagerHibernateSearch implements SearchManagerSPI {
                 lstc = searchAnnotationByKeyword(queryString, fullTextEntityManager);
                 break;
             case QUERY_FIELD_ON_ANNOTATION_DATA:
+                if (field == null || "".equals(field)){
+                    field = "indexField";
+                }
                 lstc = searchAnnotationByTypeAndField(queryString, field, (Class<Annotation.Data>) clazz, fullTextEntityManager);
                 break;
             default:

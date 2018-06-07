@@ -26,8 +26,8 @@ public abstract class ADTAbstractAnnotation implements ADTAnnotation {
     private static final org.apache.logging.log4j.Logger log = LogManager.getLogger(ADTAbstractAnnotation.class);
 
     @Part
-    static ResourceManager resourceManager;
-    
+    protected static ResourceManager resourceManager;
+
     @Override
     public void registerAsSource(AnnotationRelation relation) {
 
@@ -72,11 +72,10 @@ public abstract class ADTAbstractAnnotation implements ADTAnnotation {
         return null;
     }
 
-    
-       public static List<Annotation<TextContent, ?>> loadAllTextAnnotations() throws ManagerAction.ActionException {
+    public static List<Annotation<TextContent, ?>> loadAllTextAnnotations() throws ManagerAction.ActionException {
 
         List<Annotation<TextContent, ?>> lostc = resourceManager.loadAllAnnotation(TextContent.class);
-        
+
         log.info("loadAllAnnotation() result lenght " + lostc.size());
 
         return lostc;
