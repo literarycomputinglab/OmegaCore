@@ -32,7 +32,6 @@ public abstract class ManagerAction {
             log.info("after action(), Transaction is in progress? " + entityManager.getTransaction().isActive());
             //System.err.println(session.getTransaction().toString());
             entityManager.getTransaction().commit();
-
             log.info("after commit transaction");
         } catch (ActionException e) {
             log.error("In transaction ", e);
@@ -47,7 +46,7 @@ public abstract class ManagerAction {
                 } else {
                     log.warn("entity manager is null!");
                 }
-                log.info("manager is now closed");
+                log.info("entity manager is now closed");
             } catch (Exception ee) {
                 log.error("Closing entityManager ", ee);
             }

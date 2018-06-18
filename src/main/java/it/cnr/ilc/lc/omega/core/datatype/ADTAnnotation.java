@@ -5,6 +5,7 @@
  */
 package it.cnr.ilc.lc.omega.core.datatype;
 
+import it.cnr.ilc.lc.omega.core.ManagerAction;
 import it.cnr.ilc.lc.omega.entity.AnnotationRelation;
 
 /**
@@ -17,4 +18,7 @@ public interface ADTAnnotation {
 
     public void registerAsTarget(AnnotationRelation relation);
 
+    public void save() throws ManagerAction.ActionException;
+
+    public boolean isRemovable()  throws ManagerAction.ActionException;
 }

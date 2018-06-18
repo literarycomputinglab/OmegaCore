@@ -150,15 +150,37 @@ public class Text {
 
     public void save() throws ManagerAction.ActionException {
         log.info("saving...");
-        resourceManager.saveSource(source);
+        this.source = resourceManager.saveSource(source);
         log.info("saved...");
 
+    }
+
+    public static Object delete(Text text) throws ManagerAction.ActionException {
+
+        if (null != text) {
+            log.info("deleting text");
+            resourceManager.deleteSource(text.getSource());
+            text.unlinkSource();
+            log.info("text deleted");
+        } else {
+            log.error("text is null!");
+            throw new IllegalArgumentException("text is null");
+        }
+        return null;
+    }
+
+    private void unlinkSource() {
+        this.source = null;
     }
 
     // getElement(Granularity)
     @Override
     public String toString() {
+        if (getSource() != null){
         return getSource().getContent().getText();
+        } else {
+            return "Source is null!";
+        }
     }
 
     public String getTextContent() {

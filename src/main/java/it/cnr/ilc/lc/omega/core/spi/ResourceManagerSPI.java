@@ -38,6 +38,9 @@ public interface ResourceManagerSPI {
     public <T extends Content, E extends Annotation.Data> Annotation<T, E>
             create(String type, AnnotationBuilder<E> builder) throws InvalidURIException; // creazione di una annotazione
 
+    /* DELETE */
+    public void delete(ResourceManager.DeleteAction deleteAction, ResourceStatus status);
+
     /* UPDATE */
     public void update(ResourceManager.UpdateAction updateAction, URI sourceUri, URI targetUri); // per l'aggiornamento del file system
 
@@ -49,7 +52,7 @@ public interface ResourceManagerSPI {
     /* DATABASE */
     public <T extends SuperNode> void persist(T resource);
 
-    public <T extends SuperNode> void merge(T resource);
+    public <T extends SuperNode> T merge(T resource);
 
     public <T extends SuperNode> Enum<EntityStatusEnum> status(T resource);
 
@@ -57,5 +60,7 @@ public interface ResourceManagerSPI {
     public <T> T load(URI uri, Class<T> clazz);
 
     public <T extends SuperNode> List<T> loadAll(Class<T> clazz);
+    
+    public boolean check(ResourceManager.CheckAction checkAction, ResourceStatus status);
 
 }

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URLConnection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
@@ -34,11 +35,11 @@ import javax.persistence.TransactionRequiredException;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import sirius.kernel.di.std.Part;
-import sirius.kernel.di.std.Parts;
 import sirius.kernel.di.std.Register;
 
 /**
@@ -199,15 +200,16 @@ public class ResourceManagerText implements ResourceManagerSPI {
     }
 
     @Override
-    public <T extends SuperNode> void merge(T resource) {
+    public <T extends SuperNode> T merge(T resource) {
 
         log.info("merge resource, is the transaction active? " + persistence.getEntityManager().getTransaction().isActive());
         try {
 
-            persistence.getEntityManager().merge(resource);
             log.debug("resource merged");
+            return persistence.getEntityManager().merge(resource);
         } catch (EntityExistsException | TransactionRequiredException e) {
             log.error("in merge resource " + e);
+            throw new IllegalArgumentException(e);
         }
     }
 
@@ -431,6 +433,153 @@ public class ResourceManagerText implements ResourceManagerSPI {
         target.get().registerAsTarget(relation);
 
         return relation;
+    }
+
+    @Override
+    public void delete(ResourceManager.DeleteAction deleteAction, ResourceStatus status) {
+        switch (deleteAction) {
+            case SOURCE:
+                deleteSource(status);
+                break;
+            case ANNOTATION:
+                deleteAnnotation(status);
+                break;
+            case LOCUS:
+            case CONTENT:
+            case ANNOTATION_RELATION:
+            default:
+                throw new UnsupportedOperationException(deleteAction.name() + " unsupported");
+        }
+    }
+
+    private void deleteSource(ResourceStatus status) {
+        log.info("deleteSource(), is the transaction active? " + persistence.getEntityManager().getTransaction().isActive());
+        try {
+            Source<TextContent> source = (Source<TextContent>) status.getSource().get();
+            List<TextLocus> loci = loadLoci(source);
+            persistence.getEntityManager().remove(persistence.getEntityManager().merge(source));
+            HashSet<Annotation> annotationList = new HashSet<>();
+            for (TextLocus locus : loci) {
+                Annotation current = locus.getAnnotation();
+                annotationList.add(locus.getAnnotation());
+                locus.setAnnotation(null);
+                current.removeLocus(locus);
+                persistence.getEntityManager().remove(locus);
+            }
+
+            //persistence.getEntityManager().flush(); //forza la rimozione dei locus prima della fine della transazione(?)
+            for (Annotation annotation : annotationList) {
+                annotation = persistence.getEntityManager().merge(annotation);
+                if (annotation.isEmptyLoci() && annotation.isEmptyRelation()) {
+                    persistence.getEntityManager().remove(annotation); //TODO deve richiamare il metodo per la cancellazione delle annotazioni!
+                    log.warn("TODO deve richiamare il metodo per la cancellazione delle annotazioni!");
+                }
+            }
+            log.info("source deleted");
+        } catch (TransactionRequiredException e) {
+            log.error("in delete resource " + e);
+        }
+    }
+
+    private void deleteAnnotation(ResourceStatus status) {
+        log.info("deleteAnnotation(), is the transaction active? " + persistence.getEntityManager().getTransaction().isActive());
+
+        if (null != status && status.getAnnotation().isPresent()) {
+            Annotation ann = (Annotation) status.getAnnotation().get();
+            ann = persistence.getEntityManager().merge(ann);
+            List<TextLocus> loci = ann.getLoci();
+            if (null != loci) {
+                for (TextLocus locus : loci) {
+                    locus.setAnnotation(null);
+                    locus.setSource(null);
+                    ann.removeLocus(locus);
+                    persistence.getEntityManager().remove(locus);
+                }
+            log.info("Loci must be empty! Isn't it? " + loci.isEmpty());
+            }
+            log.info("Loci is null");
+
+            List<AnnotationRelation> relations = ann.getRelations();
+            if (null != relations) {
+                for (int i=0;i < relations.size(); i++) {
+                    relations.get(i).setSourceAnnotation(null);
+                    relations.get(i).setTargetAnnotation(null);
+                    persistence.getEntityManager().remove(persistence.getEntityManager().merge(relations.get(i)));
+                    ann.removeRelation(relations.get(i));
+                }
+            }
+            log.info("Relations must be empty! Isn't it? " + relations.isEmpty());
+
+            try {
+                if (persistence.getEntityManager().contains(ann)) {
+                    log.info("deleteAnnotation(), annotation is attached");
+                    persistence.getEntityManager().remove(ann);
+                } else {
+                    log.info("deleteAnnotation(), annotation is detached");
+                    persistence.getEntityManager().remove(persistence.getEntityManager().merge(ann));
+                }
+
+                log.info("deleteAnnotation(), annotation is deleted");
+
+            } catch (TransactionRequiredException e) {
+                log.error("in delete resource " + e);
+            }
+        }
+
+    }
+
+    private List<TextLocus> loadLoci(Source source) {
+        EntityManager em = persistence.getEntityManager();
+        log.info("Creating local criteria query for load loci pointing to source " + source.getUri());
+
+        //Query q =  em.createQuery("Select s From Source s");
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+
+        CriteriaQuery<TextLocus> cq = cb.createQuery(TextLocus.class);
+
+        Root<TextLocus> textLocus = cq.from(TextLocus.class);
+
+        Predicate predicate = cb.equal(textLocus.get("source"), source);
+
+        cq.select(textLocus).where(predicate);
+        TypedQuery<TextLocus> query = em.createQuery(cq);
+//
+//        //System.err.println("result " + result);
+        List<TextLocus> los = query.getResultList();
+        log.info("resultset lenght " + los.size());
+        return los;
+    }
+
+    @Override
+    public boolean check(ResourceManager.CheckAction action, ResourceStatus status) {
+        switch (action) {
+
+            case ANNOTATION_RELATION:
+                return checkAnnotationRelation((Annotation<?, ?>) status.getAnnotation().get());
+            default:
+                throw new UnsupportedOperationException(action.name() + " unsupported");
+        }
+    }
+
+    private <T extends Content, E extends Annotation.Data>
+            boolean checkAnnotationRelation(Annotation<T, E> annotation) {
+
+        EntityManager em = persistence.getEntityManager();
+        log.info("checkAnnotationRelation " + annotation.getUri());
+
+        //Query q =  em.createQuery("Select s From Source s");
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+
+        CriteriaQuery<Long> cq = cb.createQuery(Long.class);
+
+        Root<AnnotationRelation> root = cq.from(AnnotationRelation.class);
+        Predicate predicate = cb.equal(root.get("targetAnnotation"), annotation);
+        cq.select(cb.count(root));
+        cq.where(predicate);
+
+        Long count = em.createQuery(cq).getSingleResult();
+        log.info("How many incoming relation ? " + (count > 0) + " count = " + count);
+        return (count > 0);
     }
 
 }

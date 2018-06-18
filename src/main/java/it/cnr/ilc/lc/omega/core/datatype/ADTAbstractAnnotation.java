@@ -44,6 +44,8 @@ public abstract class ADTAbstractAnnotation implements ADTAnnotation {
 
     protected abstract Annotation<?, ?> getAnnotation();
 
+    protected abstract void setAnnotation(Annotation<?, ?> annotation);
+
     public static <T extends ADTAbstractAnnotation> T of(Class<T> clazz, URI uri, Object... params) {
         try {
 
@@ -88,4 +90,22 @@ public abstract class ADTAbstractAnnotation implements ADTAnnotation {
         //log.info ("loci " + ann.getLociIterator(TextContent.class).next());
         return ann;
     }
+
+    public static ADTAnnotation delete(ADTAnnotation adtAnnotation) throws ManagerAction.ActionException {
+        log.info("delete()");
+        if (null != adtAnnotation) {
+            ADTAbstractAnnotation adtaa = (ADTAbstractAnnotation) adtAnnotation;
+            if (adtaa.isRemovable()) {
+                resourceManager.deleteAnnotation(adtaa.getAnnotation());
+                adtaa.setAnnotation(null);
+                return null;
+            } else {
+                log.warn("The selected annotation cannot be removed! " + adtaa.getAnnotation().getUri());
+            }
+        } else {
+            log.warn("Annotation is null!");
+        }
+        return adtAnnotation;
+    }
+
 }

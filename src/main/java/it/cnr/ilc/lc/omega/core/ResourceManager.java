@@ -12,13 +12,13 @@ import it.cnr.ilc.lc.omega.entity.Content;
 import it.cnr.ilc.lc.omega.entity.Locus;
 import it.cnr.ilc.lc.omega.entity.AnnotationRelation;
 import it.cnr.ilc.lc.omega.entity.Source;
+import it.cnr.ilc.lc.omega.entity.SuperNode;
 import it.cnr.ilc.lc.omega.entity.TextContent;
 import it.cnr.ilc.lc.omega.entity.TextLocus;
 import it.cnr.ilc.lc.omega.exception.InvalidURIException;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.activation.MimeType;
 import org.apache.logging.log4j.LogManager;
@@ -43,6 +43,16 @@ public final class ResourceManager {
     public enum UpdateAction {
 
         SOURCE, CONTENT, FOLDER, ANNOTATION, LOCUS, ANNOTATION_RELATION
+    }
+
+    public enum DeleteAction {
+
+        SOURCE, CONTENT, FOLDER, ANNOTATION, LOCUS, ANNOTATION_RELATION
+    }
+
+    public enum CheckAction {
+
+        ANNOTATION_RELATION
     }
 
     public enum OmegaMimeType {
@@ -168,19 +178,19 @@ public final class ResourceManager {
         }
     }
 
-    public <T extends Content, E extends Annotation.Data> void
-            saveAnnotation(final Annotation<T, E> annotation) throws ManagerAction.ActionException {
+    public <T extends Content, E extends Annotation.Data> boolean
+            isTargetOfRelation(final Annotation<T, E> annotation) throws ManagerAction.ActionException {
 
         try {
-            new ManagerAction() {
+            return new ManagerAction() {
 
                 @Override
                 protected Boolean action() {
                     for (ResourceManagerSPI manager : managers) {
-                        manager.merge(annotation);
-                        return true;
+                        return manager.check(CheckAction.ANNOTATION_RELATION, new ResourceStatus() // controllare i tipi generici
+                                .annotation(annotation));
                     }
-                    return false;
+                    throw new IllegalArgumentException("No suitable Resource Manager found for Annotation!");
                 }
 
             }.doAction();
@@ -191,17 +201,38 @@ public final class ResourceManager {
         }
     }
 
-    public <T extends Content> void saveSource(final Source<T> source) throws ManagerAction.ActionException {
+    public <T extends Content, E extends Annotation.Data> Annotation<T, E>
+            saveAnnotation(final Annotation<T, E> annotation) throws ManagerAction.ActionException {
 
-        new ManagerAction() {
+        try {
+            return new ManagerAction() {
+
+                @Override
+                protected Annotation<T, E> action() {
+                    for (ResourceManagerSPI manager : managers) {
+                        return manager.merge(annotation);
+                    }
+                    throw new IllegalArgumentException("No suitable Resource Manager found for Annotation!");
+                }
+
+            }.doAction();
+        } catch (ManagerAction.ActionException e) {
+            log.error(String.format("On saveAnnotation with entitymanager.merge(): %s, %s", e.getCause(), e.getClass()));
+            log.error("An alternative politic (like persist()) should be implemented...");
+            throw new ManagerAction.ActionException(e);
+        }
+    }
+
+    public <T extends Content> Source<T> saveSource(final Source<T> source) throws ManagerAction.ActionException {
+
+        return new ManagerAction() {
 
             @Override
-            protected Boolean action() {
+            protected Source<T> action() {
                 for (ResourceManagerSPI manager : managers) {
-                    manager.persist(source);
-                    return true;
+                    return manager.merge(source);
                 }
-                return false;
+                throw new IllegalArgumentException("No suitable Resource Manager found for Source!");
             }
 
         }.doAction();
@@ -215,7 +246,8 @@ public final class ResourceManager {
             @Override
             protected Source<T> action() throws ManagerAction.ActionException {
                 for (ResourceManagerSPI manager : managers) {
-                    Source<T> s = manager.load(uri, Source.class);
+                    Source<T> s = manager.load(uri, Source.class
+                    );
                     if (null == s) {
                         s = Source.sourceOf(clazz, URI.create(LoadError.NORESULT.getUri()));
                     }
@@ -236,7 +268,8 @@ public final class ResourceManager {
             @Override
             protected List<Source> action() throws ManagerAction.ActionException {
                 for (ResourceManagerSPI manager : managers) {
-                    List<Source> los = manager.loadAll(Source.class);
+                    List<Source> los = manager.loadAll(Source.class
+                    );
                     return los;
                 }
                 log.error("loadAllSources(): Unable to load all resources");
@@ -254,7 +287,8 @@ public final class ResourceManager {
             @Override
             protected List<Annotation> action() throws ManagerAction.ActionException {
                 for (ResourceManagerSPI manager : managers) {
-                    List<Annotation> los = manager.loadAll(Annotation.class);
+                    List<Annotation> los = manager.loadAll(Annotation.class
+                    );
                     return los;
                 }
                 log.error("loadAllAnnotation(): Unable to load all annotations");
@@ -304,7 +338,8 @@ public final class ResourceManager {
             @Override
             protected Source<T> action() throws ManagerAction.ActionException { // IL tipo di ritorno e' una Source: poco corretto ma Annotation extends Source
                 for (ResourceManagerSPI manager : managers) {
-                    return manager.load(uri, Annotation.class);
+                    return manager.load(uri, Annotation.class
+                    );
                 }
                 log.error("loadAnnotation(): Unable to load resource at uri " + uri);
                 throw new ManagerAction.ActionException(new Exception("loadAnnotation(): Unable to load resource at uri " + uri));
@@ -546,13 +581,52 @@ public final class ResourceManager {
     public void updateAnnotationRelation(ADTAnnotation source, ADTAnnotation target, AnnotationRelationType type) throws ManagerAction.ActionException {
         try {
 
-            ADTAnnotationSource src = DTOValueRM.instantiate(ADTAnnotationSource.class).withValue(source);
-            ADTAnnotationTarget trg = DTOValueRM.instantiate(ADTAnnotationTarget.class).withValue(target);
+            ADTAnnotationSource src = DTOValueRM.instantiate(ADTAnnotationSource.class
+            ).withValue(source);
+            ADTAnnotationTarget trg = DTOValueRM.instantiate(ADTAnnotationTarget.class
+            ).withValue(target);
             updateAnnotationRelation(src, trg, type);
 
         } catch (InstantiationException | IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(ResourceManager.class.getName()).log(Level.SEVERE, null, ex);
+            log.error(ex);
         }
+    }
+
+    public void deleteSource(Source<TextContent> source) throws ManagerAction.ActionException {
+        new ManagerAction() {
+
+            @Override
+            protected Boolean action() throws ManagerAction.ActionException {
+                for (ResourceManagerSPI manager : managers) {
+                    if (manager.getMimeType().getBaseType().equals(OmegaMimeType.PLAIN.toString())) {
+                        manager.delete(DeleteAction.SOURCE,
+                                new ResourceStatus().source(source));
+                        return true;
+                    }
+                }
+                log.error("No suitable manager for delete");
+                throw new ManagerAction.ActionException(new Exception("No suitable manager for delete"));
+            }
+        }.doAction();
+    }
+
+    public <T extends Content, E extends Annotation.Data> void
+            deleteAnnotation(Annotation<T, E> annotation) throws ManagerAction.ActionException {
+        new ManagerAction() {
+
+            @Override
+            protected Boolean action() throws ManagerAction.ActionException {
+                for (ResourceManagerSPI manager : managers) {
+                    if (manager.getMimeType().getBaseType().equals(OmegaMimeType.PLAIN.toString())) {
+                        manager.delete(DeleteAction.ANNOTATION,
+                                new ResourceStatus().annotation(annotation));
+                        return true;
+                    }
+                }
+                log.error("No suitable manager for delete");
+                throw new ManagerAction.ActionException(new Exception("No suitable manager for delete"));
+            }
+        }.doAction();
     }
 
 }
