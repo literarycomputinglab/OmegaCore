@@ -465,6 +465,7 @@ public class ResourceManagerText implements ResourceManagerSPI {
                 locus.setAnnotation(null);
                 current.removeLocus(locus);
                 persistence.getEntityManager().remove(locus);
+                persistence.getEntityManager().merge(current);
             }
 
             //persistence.getEntityManager().flush(); //forza la rimozione dei locus prima della fine della transazione(?)
@@ -494,21 +495,45 @@ public class ResourceManagerText implements ResourceManagerSPI {
                     locus.setSource(null);
                     ann.removeLocus(locus);
                     persistence.getEntityManager().remove(locus);
+                    persistence.getEntityManager().merge(ann);
                 }
-            log.info("Loci must be empty! Isn't it? " + loci.isEmpty());
+                log.info("Loci must be empty! Isn't it? " + loci.isEmpty());
+            } else {
+                log.info("Loci is null");
             }
-            log.info("Loci is null");
 
             List<AnnotationRelation> relations = ann.getRelations();
             if (null != relations) {
-                for (int i=0;i < relations.size(); i++) {
+                int size = relations.size();
+                for (int i = 0; i < size; i++) {
                     relations.get(i).setSourceAnnotation(null);
                     relations.get(i).setTargetAnnotation(null);
                     persistence.getEntityManager().remove(persistence.getEntityManager().merge(relations.get(i)));
                     ann.removeRelation(relations.get(i));
+                    persistence.getEntityManager().merge(ann);
                 }
+                log.info("Relations must be empty! Isn't it? " + relations.isEmpty());
+            } else {
+                log.info("Relations is null");
             }
-            log.info("Relations must be empty! Isn't it? " + relations.isEmpty());
+
+            List<AnnotationRelation> targetRelations = loadAnnotationRelationAsTarget(ann);
+            if (null != targetRelations) {
+                int size = targetRelations.size();
+                for (int i = 0; i < size; i++) {
+                    Annotation sourceAnnotation = targetRelations.get(i).getSourceAnnotation();
+                    targetRelations.get(i).setSourceAnnotation(null);
+                    targetRelations.get(i).setTargetAnnotation(null);
+                    sourceAnnotation.removeRelation(targetRelations.get(i));
+                    persistence.getEntityManager().remove(targetRelations.get(i));
+                    targetRelations.remove(i);
+                    persistence.getEntityManager().merge(sourceAnnotation);
+
+                }
+                log.info("targetRelations must be empty! Isn't it? " + targetRelations.isEmpty());
+            } else {
+                log.info("targetRelations is null");
+            }
 
             try {
                 if (persistence.getEntityManager().contains(ann)) {
@@ -555,17 +580,17 @@ public class ResourceManagerText implements ResourceManagerSPI {
         switch (action) {
 
             case ANNOTATION_RELATION:
-                return checkAnnotationRelation((Annotation<?, ?>) status.getAnnotation().get());
+                return checkAnnotationRelationAsTarget((Annotation<?, ?>) status.getAnnotation().get());
             default:
                 throw new UnsupportedOperationException(action.name() + " unsupported");
         }
     }
 
     private <T extends Content, E extends Annotation.Data>
-            boolean checkAnnotationRelation(Annotation<T, E> annotation) {
+            boolean checkAnnotationRelationAsTarget(Annotation<T, E> annotation) {
 
         EntityManager em = persistence.getEntityManager();
-        log.info("checkAnnotationRelation " + annotation.getUri());
+        log.info("checkAnnotationRelationAsTarget " + annotation.getUri());
 
         //Query q =  em.createQuery("Select s From Source s");
         CriteriaBuilder cb = em.getCriteriaBuilder();
@@ -580,6 +605,27 @@ public class ResourceManagerText implements ResourceManagerSPI {
         Long count = em.createQuery(cq).getSingleResult();
         log.info("How many incoming relation ? " + (count > 0) + " count = " + count);
         return (count > 0);
+    }
+
+    private <T extends Content, E extends Annotation.Data>
+            List<AnnotationRelation> loadAnnotationRelationAsTarget(Annotation<T, E> annotation) {
+
+        EntityManager em = persistence.getEntityManager();
+        log.info("loadAnnotationRelationAsTarget " + annotation.getUri());
+
+        //Query q =  em.createQuery("Select s From Source s");
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+
+        CriteriaQuery<AnnotationRelation> cq = cb.createQuery(AnnotationRelation.class);
+
+        Root<AnnotationRelation> root = cq.from(AnnotationRelation.class);
+        Predicate predicate = cb.equal(root.get("targetAnnotation"), annotation);
+        cq.select(root);
+        cq.where(predicate);
+
+        List<AnnotationRelation> result = em.createQuery(cq).getResultList();
+        log.info("How many incoming relation ? " + result.size());
+        return result;
     }
 
 }

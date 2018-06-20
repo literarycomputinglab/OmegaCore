@@ -92,11 +92,12 @@ public abstract class ADTAbstractAnnotation implements ADTAnnotation {
     }
 
     public static ADTAnnotation delete(ADTAnnotation adtAnnotation) throws ManagerAction.ActionException {
-        log.info("delete()");
         if (null != adtAnnotation) {
             ADTAbstractAnnotation adtaa = (ADTAbstractAnnotation) adtAnnotation;
+            log.info("Trying to delete annotation uri=(" + adtaa.getAnnotation().getUri() + ")");
             if (adtaa.isRemovable()) {
                 resourceManager.deleteAnnotation(adtaa.getAnnotation());
+                log.info("annotation uri=(" + adtaa.getAnnotation().getUri() + ") deleted");
                 adtaa.setAnnotation(null);
                 return null;
             } else {
