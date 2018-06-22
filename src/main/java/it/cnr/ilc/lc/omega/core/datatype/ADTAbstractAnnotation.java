@@ -74,6 +74,25 @@ public abstract class ADTAbstractAnnotation implements ADTAnnotation {
         return null;
     }
 
+    public static <T extends ADTAbstractAnnotation> T load(URI uri, Class<T> clazz) {
+        try {
+
+            log.info("Loading Annotation with uri=(" + uri + ")");
+
+            if (null != uri) {
+                Method loadMethod = clazz.getMethod("load", URI.class);
+                log.info("Invoking load static method of class=(" + clazz.getCanonicalName() + ")");
+                return (T) loadMethod.invoke(null, uri);
+            } else {
+                log.error("URI is null!");
+            }
+        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+            log.error(ex);
+            throw new IllegalArgumentException(ex);
+        }
+        throw new IllegalArgumentException("URI is null!");
+    }
+
     public static List<Annotation<TextContent, ?>> loadAllTextAnnotations() throws ManagerAction.ActionException {
 
         List<Annotation<TextContent, ?>> lostc = resourceManager.loadAllAnnotation(TextContent.class);

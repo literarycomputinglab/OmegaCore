@@ -490,7 +490,9 @@ public class ResourceManagerText implements ResourceManagerSPI {
             ann = persistence.getEntityManager().merge(ann);
             List<TextLocus> loci = ann.getLoci();
             if (null != loci) {
-                for (TextLocus locus : loci) {
+                int size = loci.size();
+                for (int i = 0; i < size; i++) {
+                    TextLocus locus = loci.get(i);
                     locus.setAnnotation(null);
                     locus.setSource(null);
                     ann.removeLocus(locus);

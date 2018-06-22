@@ -550,6 +550,7 @@ public final class ResourceManager {
                                 new ResourceStatus<T, E, V>().annotation(annotation));
                         manager.update(UpdateAction.ANNOTATION, annotation,
                                 new ResourceStatus<T, E, V>().textLocus((Locus<TextContent>) locus));
+                        log.info("locus uri=(" + locus.getUri() + ") updated is pointing to uri=(" + locus.getSourceUri() +")");
                         return true;
                     }
                 }
