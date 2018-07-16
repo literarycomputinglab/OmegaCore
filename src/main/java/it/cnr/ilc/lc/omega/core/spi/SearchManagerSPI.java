@@ -19,4 +19,6 @@ public interface SearchManagerSPI {
 
     public <E extends SuperNode, T extends SuperNode> List<E> searchOnField(SearchManager.SearchType type, String query, String field, Class<T> clazz);
 
+    public Boolean reindex();
+    
 }
