@@ -13,6 +13,7 @@ import it.cnr.ilc.lc.omega.entity.TextContent;
 import it.cnr.ilc.lc.omega.persistence.PersistenceHandler;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import javax.persistence.EntityManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,6 +33,22 @@ public class SearchManagerHibernateSearch implements SearchManagerSPI {
 
     @Part
     PersistenceHandler persistence;
+
+    @Override
+    public Boolean reindex() {
+        Boolean ret = false;
+        EntityManager em = persistence.getEntityManager();
+        FullTextEntityManager fullTextEntityManager
+                = org.hibernate.search.jpa.Search.getFullTextEntityManager(em);
+        try {
+            fullTextEntityManager.createIndexer().startAndWait();
+        } catch (InterruptedException ex) {
+            log.info("errore in reindex", ex);
+        }
+        return ret;
+    }
+    
+    
 
     @Override
     public <T extends SuperNode> List<T> search(SearchManager.SearchType type, String queryString, Class<T> clazz) {
