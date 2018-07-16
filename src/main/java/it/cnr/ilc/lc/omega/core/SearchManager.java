@@ -84,5 +84,25 @@ public final class SearchManager {
             }
         }.doAction();    
     }
+        
+        public boolean reindex() throws ManagerAction.ActionException {
+            Boolean ret = false;
+            
+            ret = new ManagerAction() {
+                @Override
+                protected  Boolean action() throws ManagerAction.ActionException {
+                    //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                    log.info("reindexing in ManagerAction");
+                    for (SearchManagerSPI manager: searchers) {
+                        Boolean ris = manager.reindex();
+                        return ris;
+                    }
+                return false;
+                }
+            }.doAction();
+            
+            
+            return ret;
+        }
 
 }
